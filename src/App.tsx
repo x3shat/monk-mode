@@ -21,7 +21,8 @@ import {
   FileDown,
   Sun,
   Moon,
-  Settings
+  Settings,
+  FileText
 } from 'lucide-react';
 import { AppState, DayProgress, DayStatus, GoalNode, WillpowerRule } from './types';
 import { 
@@ -40,6 +41,7 @@ import ActiveTriggers from './components/ActiveTriggers';
 import GoalMap from './components/GoalMap';
 import SettingsAndData from './components/SettingsAndData';
 import AnalyticsPanel from './components/AnalyticsPanel';
+import DailyNotes from './components/DailyNotes';
 import { fetchWillpowerRules, addWillpowerRule, updateWillpowerRule, deleteWillpowerRule } from './tauriService';
 
 export default function App() {
@@ -108,7 +110,7 @@ export default function App() {
     };
     loadRules();
   }, []);
-  const [activeTab, setActiveTab] = useState<'grid' | 'biological' | 'goals' | 'analytics' | 'settings' | 'willpower'>('grid');
+  const [activeTab, setActiveTab] = useState<'grid' | 'biological' | 'goals' | 'analytics' | 'notes' | 'settings' | 'willpower'>('grid');
   const [isCalmModeActive, setIsCalmModeActive] = useState<boolean>(false);
   
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -521,6 +523,21 @@ export default function App() {
           </button>
 
           <button
+            id="tab-btn-notes"
+            onClick={() => setActiveTab('notes')}
+            className={`px-4 py-2.5 font-sans font-medium tracking-wide rounded-t-xl transition-all cursor-pointer ${
+              activeTab === 'notes' 
+                ? 'text-white border-b-2 border-cyan-400 bg-[#0c0c0f]/70 font-semibold' 
+                : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            <span className="flex items-center gap-2 text-xs">
+              <FileText size={13} />
+              Notes & Journal
+            </span>
+          </button>
+
+          <button
             id="tab-btn-settings"
             onClick={() => setActiveTab('settings')}
             className={`px-4 py-2.5 font-sans font-medium tracking-wide rounded-t-xl transition-all cursor-pointer ${
@@ -583,6 +600,10 @@ export default function App() {
 
           {activeTab === 'analytics' && (
             <AnalyticsPanel days={days} theme={theme} />
+          )}
+
+          {activeTab === 'notes' && (
+            <DailyNotes theme={theme} />
           )}
 
           {activeTab === 'settings' && (

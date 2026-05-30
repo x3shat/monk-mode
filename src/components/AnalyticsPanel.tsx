@@ -44,17 +44,11 @@ export default function AnalyticsPanel({ days, theme }: AnalyticsPanelProps) {
     };
   });
 
-  // Filter to show active days (not locked) + a buffer of 1 day to show next step, or just all non-locked days
-  const activeData = chartData.filter(d => d.status !== 'locked');
-  
-  // If no days are completed/missed yet, show a fallback first day so chart doesn't look empty
-  const displayData = activeData.length > 0 ? activeData : [
-    { day: 'Day 1', dayNum: 1, momentum: 50, studyHours: 0, status: 'unlocked' }
-  ];
+  const displayData = chartData;
 
   const totalStudyHours = days.reduce((acc, d) => acc + (d.studyHours || 0), 0);
-  const totalCompleted = days.filter(d => d.status === 'completed').length;
-  const averageHours = totalCompleted ? (totalStudyHours / totalCompleted) : 0;
+  const daysWithHours = days.filter(d => (d.studyHours || 0) > 0).length;
+  const averageHours = daysWithHours ? (totalStudyHours / daysWithHours) : 0;
   const highestStudyDay = days.reduce((max, d) => (d.studyHours > max.studyHours ? d : max), days[0]);
 
   // Theme-aware styles for charts

@@ -24,270 +24,38 @@ interface RoutineBlock {
 }
 
 const WEEKDAY_ROUTINE: RoutineBlock[] = [
-  { 
-    startTime: "08:00 AM", 
-    endTime: "08:15 AM", 
-    activity: "Wake Up & Hydrate", 
-    details: "Drink 2 glasses of water.",
-    zone: "reset", 
-    startMin: 480, 
-    endMin: 495 
-  },
-  { 
-    startTime: "08:15 AM", 
-    endTime: "09:00 AM", 
-    activity: "Morning Sunlight & Peace", 
-    details: "Stand on the balcony, drink tea, Hare Krishna chant.",
-    zone: "reset", 
-    startMin: 495, 
-    endMin: 540 
-  },
-  { 
-    startTime: "09:00 AM", 
-    endTime: "10:30 AM", 
-    activity: "Study Block 1 (1.5 hrs)", 
-    details: "Pre-game: Stare at wall for 2 mins. Rule: Active recall only.",
-    zone: "deep-work", 
-    startMin: 540, 
-    endMin: 630 
-  },
-  { 
-    startTime: "10:30 AM", 
-    endTime: "11:00 AM", 
-    activity: "Breakfast", 
-    details: "Rule: Eat at the dining table in total silence.",
-    zone: "reset", 
-    startMin: 630, 
-    endMin: 660 
-  },
-  { 
-    startTime: "11:00 AM", 
-    endTime: "01:30 PM", 
-    activity: "Study Block 2 (2.5 hrs)", 
-    details: "Pre-game: Stare at wall for 2 mins. Push through friction.",
-    zone: "deep-work", 
-    startMin: 660, 
-    endMin: 810 
-  },
-  { 
-    startTime: "01:30 PM", 
-    endTime: "02:00 PM", 
-    activity: "Hygiene & Lunch", 
-    details: "60-Second Cold Shower. Eat lunch in silence.",
-    zone: "reset", 
-    startMin: 810, 
-    endMin: 840 
-  },
-  { 
-    startTime: "02:00 PM", 
-    endTime: "02:30 PM", 
-    activity: "Mental Break", 
-    details: "Brush teeth. Play with ball / walk inside room (No screens).",
-    zone: "reset", 
-    startMin: 840, 
-    endMin: 870 
-  },
-  { 
-    startTime: "02:30 PM", 
-    endTime: "04:00 PM", 
-    activity: "Study Block 3 (1.5 hrs)", 
-    details: "Pre-game: Stare at wall for 2 mins.",
-    zone: "deep-work", 
-    startMin: 870, 
-    endMin: 960 
-  },
-  { 
-    startTime: "04:00 PM", 
-    endTime: "04:30 PM", 
-    activity: "Brain Reset", 
-    details: "Yoga Nidra (NSDR). Lie down and reset the nervous system.",
-    zone: "reset", 
-    startMin: 960, 
-    endMin: 990 
-  },
-  { 
-    startTime: "04:30 PM", 
-    endTime: "06:00 PM", 
-    activity: "Study Block 4 (1.5 hrs)", 
-    details: "Pre-game: Stare at wall for 2 mins.",
-    zone: "deep-work", 
-    startMin: 990, 
-    endMin: 1080 
-  },
-  { 
-    startTime: "06:00 PM", 
-    endTime: "06:30 PM", 
-    activity: "Family & Fuel", 
-    details: "Have snacks with family. Disconnect from work.",
-    zone: "transition", 
-    startMin: 1080, 
-    endMin: 1110 
-  },
-  { 
-    startTime: "06:30 PM", 
-    endTime: "07:30 PM", 
-    activity: "Physical Training", 
-    details: "1 hr walk (speed walking) OR Cardio OR 30 Pushups/Squats/Pullups. Eat a banana post-workout.",
-    zone: "transition", 
-    startMin: 1110, 
-    endMin: 1170 
-  },
-  { 
-    startTime: "07:30 PM", 
-    endTime: "09:00 PM", 
-    activity: "Study Block 5 (1.5 hrs)", 
-    details: "Pre-game: Stare at wall for 2 mins. Rule: +10 minute push at the end.",
-    zone: "deep-work", 
-    startMin: 1170, 
-    endMin: 1260 
-  },
-  { 
-    startTime: "09:00 PM", 
-    endTime: "09:15 PM", 
-    activity: "SCREENS OFF", 
-    details: "Hard stop. No digital devices from this point forward.",
-    zone: "transition", 
-    startMin: 1260, 
-    endMin: 1275 
-  },
-  { 
-    startTime: "09:15 PM", 
-    endTime: "11:30 PM", 
-    activity: "Analog Wind-down", 
-    details: "Draw, play guitar, juggle, read books, clean room.",
-    zone: "transition", 
-    startMin: 1275, 
-    endMin: 1410 
-  },
-  { 
-    startTime: "11:30 PM", 
-    endTime: "12:00 AM", 
-    activity: "Nightly Journaling", 
-    details: "Write in diary. Log your wins. Prepare for tomorrow.",
-    zone: "sleep", 
-    startMin: 1410, 
-    endMin: 1440 
-  },
-  { 
-    startTime: "12:00 AM", 
-    endTime: "08:00 AM", 
-    activity: "Sleep", 
-    details: "Lights out.",
-    zone: "sleep", 
-    startMin: 0, 
-    endMin: 480 
-  }
+  { startTime: "08:00 AM", endTime: "08:15 AM", activity: "Wake Up & Hydrate", details: "Drink 2 glasses of water.", zone: "reset", startMin: 480, endMin: 495 },
+  { startTime: "08:15 AM", endTime: "09:00 AM", activity: "Morning Sunlight & Peace", details: "Stand on the balcony, drink tea, Hare Krishna chant.", zone: "reset", startMin: 495, endMin: 540 },
+  { startTime: "09:00 AM", endTime: "10:30 AM", activity: "Study Block 1 (1.5 hrs)", details: "Pre-game: Stare at wall for 2 mins. Rule: Active recall only.", zone: "deep-work", startMin: 540, endMin: 630 },
+  { startTime: "10:30 AM", endTime: "11:00 AM", activity: "Breakfast", details: "Rule: Eat at the dining table in total silence.", zone: "reset", startMin: 630, endMin: 660 },
+  { startTime: "11:00 AM", endTime: "01:30 PM", activity: "Study Block 2 (2.5 hrs)", details: "Pre-game: Stare at wall for 2 mins. Push through friction.", zone: "deep-work", startMin: 660, endMin: 810 },
+  { startTime: "01:30 PM", endTime: "02:00 PM", activity: "Hygiene & Lunch", details: "60-Second Cold Shower. Eat lunch in silence.", zone: "reset", startMin: 810, endMin: 840 },
+  { startTime: "02:00 PM", endTime: "02:30 PM", activity: "Mental Break", details: "Brush teeth. Play with ball / walk inside room (No screens).", zone: "reset", startMin: 840, endMin: 870 },
+  { startTime: "02:30 PM", endTime: "04:00 PM", activity: "Study Block 3 (1.5 hrs)", details: "Pre-game: Stare at wall for 2 mins.", zone: "deep-work", startMin: 870, endMin: 960 },
+  { startTime: "04:00 PM", endTime: "04:30 PM", activity: "Brain Reset", details: "Yoga Nidra (NSDR). Lie down and reset the nervous system.", zone: "reset", startMin: 960, endMin: 990 },
+  { startTime: "04:30 PM", endTime: "06:00 PM", activity: "Study Block 4 (1.5 hrs)", details: "Pre-game: Stare at wall for 2 mins.", zone: "deep-work", startMin: 990, endMin: 1080 },
+  { startTime: "06:00 PM", endTime: "06:30 PM", activity: "Family & Fuel", details: "Have snacks with family. Disconnect from work.", zone: "reset", startMin: 1080, endMin: 1110 },
+  { startTime: "06:30 PM", endTime: "07:30 PM", activity: "Physical Training", details: "1 hr walk (speed walking) OR Cardio OR 30 Pushups/Squats/Pullups. Eat a banana post-workout.", zone: "transition", startMin: 1110, endMin: 1170 },
+  { startTime: "07:30 PM", endTime: "09:00 PM", activity: "Study Block 5 (1.5 hrs)", details: "Pre-game: Stare at wall for 2 mins. Rule: +10 minute push at the end.", zone: "deep-work", startMin: 1170, endMin: 1260 },
+  { startTime: "09:00 PM", endTime: "09:15 PM", activity: "SCREENS OFF", details: "Hard stop. No digital devices from this point forward.", zone: "transition", startMin: 1260, endMin: 1275 },
+  { startTime: "09:15 PM", endTime: "11:30 PM", activity: "Analog Wind-down", details: "Draw, play guitar, juggle, read books, clean room.", zone: "transition", startMin: 1275, endMin: 1410 },
+  { startTime: "11:30 PM", endTime: "12:00 AM", activity: "Nightly Journaling", details: "Write in diary. Log your wins. Prepare for tomorrow.", zone: "transition", startMin: 1410, endMin: 1440 },
+  { startTime: "12:00 AM", endTime: "08:00 AM", activity: "Sleep", details: "Lights out.", zone: "sleep", startMin: 0, endMin: 480 }
 ];
 
 const SUNDAY_ROUTINE: RoutineBlock[] = [
-  { 
-    startTime: "08:00 AM", 
-    endTime: "09:00 AM", 
-    activity: "Wake Up & Hydrate", 
-    details: "Water, Balcony, Tea, Hare Krishna chant.",
-    zone: "reset", 
-    startMin: 480, 
-    endMin: 540 
-  },
-  { 
-    startTime: "09:00 AM", 
-    endTime: "10:00 AM", 
-    activity: "Breakfast", 
-    details: "Eat in silence.",
-    zone: "reset", 
-    startMin: 540, 
-    endMin: 600 
-  },
-  { 
-    startTime: "10:00 AM", 
-    endTime: "12:00 PM", 
-    activity: "Study Block 1 (1.5 hrs)", 
-    details: "Pre-game wall stare.",
-    zone: "deep-work", 
-    startMin: 600, 
-    endMin: 720 
-  },
-  { 
-    startTime: "12:00 PM", 
-    endTime: "01:30 PM", 
-    activity: "Study Block 2 (1.5 hrs)", 
-    details: "Pre-game wall stare.",
-    zone: "deep-work", 
-    startMin: 720, 
-    endMin: 810 
-  },
-  { 
-    startTime: "01:30 PM", 
-    endTime: "02:30 PM", 
-    activity: "Hygiene & Lunch", 
-    details: "60-Second Cold Shower. Lunch in silence. Break/Walk.",
-    zone: "reset", 
-    startMin: 810, 
-    endMin: 870 
-  },
-  { 
-    startTime: "02:30 PM", 
-    endTime: "04:00 PM", 
-    activity: "Study Block 3 (1.5 hrs)", 
-    details: "Final study block of the week.",
-    zone: "deep-work", 
-    startMin: 870, 
-    endMin: 960 
-  },
-  { 
-    startTime: "04:00 PM", 
-    endTime: "04:30 PM", 
-    activity: "Yoga Nidra", 
-    details: "Deep nervous system reset.",
-    zone: "reset", 
-    startMin: 960, 
-    endMin: 990 
-  },
-  { 
-    startTime: "04:30 PM", 
-    endTime: "06:00 PM", 
-    activity: "Admin Window", 
-    details: "(Screens Allowed): Get updates, check news, apply for jobs/opportunities.",
-    zone: "transition", 
-    startMin: 990, 
-    endMin: 1080 
-  },
-  { 
-    startTime: "06:00 PM", 
-    endTime: "08:00 PM", 
-    activity: "Radical Solitude", 
-    details: "2 Hours: Sit entirely alone. No screens, no books, no music. Process your thoughts.",
-    zone: "reset", 
-    startMin: 1080, 
-    endMin: 1200 
-  },
-  { 
-    startTime: "08:00 PM", 
-    endTime: "09:00 PM", 
-    activity: "Dinner & Relax", 
-    details: "Dinner with family.",
-    zone: "transition", 
-    startMin: 1200, 
-    endMin: 1260 
-  },
-  { 
-    startTime: "09:00 PM", 
-    endTime: "12:00 AM", 
-    activity: "SCREENS OFF", 
-    details: "Analog activities, Nightly Journaling.",
-    zone: "transition", 
-    startMin: 1260, 
-    endMin: 1440 
-  },
-  { 
-    startTime: "12:00 AM", 
-    endTime: "08:00 AM", 
-    activity: "Sleep", 
-    details: "Lights out.",
-    zone: "sleep", 
-    startMin: 0, 
-    endMin: 480 
-  }
+  { startTime: "08:00 AM", endTime: "09:00 AM", activity: "Wake Up & Hydrate", details: "Water, Balcony, Tea, Hare Krishna chant.", zone: "reset", startMin: 480, endMin: 540 },
+  { startTime: "09:00 AM", endTime: "10:00 AM", activity: "Breakfast", details: "Eat in silence.", zone: "reset", startMin: 540, endMin: 600 },
+  { startTime: "10:00 AM", endTime: "12:00 PM", activity: "Study Block 1 (1.5 hrs)", details: "Pre-game wall stare.", zone: "deep-work", startMin: 600, endMin: 720 },
+  { startTime: "12:00 PM", endTime: "01:30 PM", activity: "Study Block 2 (1.5 hrs)", details: "Pre-game wall stare.", zone: "deep-work", startMin: 720, endMin: 810 },
+  { startTime: "01:30 PM", endTime: "02:30 PM", activity: "Hygiene & Lunch", details: "60-Second Cold Shower. Lunch in silence. Break/Walk.", zone: "reset", startMin: 810, endMin: 870 },
+  { startTime: "02:30 PM", endTime: "04:00 PM", activity: "Study Block 3 (1.5 hrs)", details: "Final study block of the week.", zone: "deep-work", startMin: 870, endMin: 960 },
+  { startTime: "04:00 PM", endTime: "04:30 PM", activity: "Yoga Nidra", details: "Deep nervous system reset.", zone: "reset", startMin: 960, endMin: 990 },
+  { startTime: "04:30 PM", endTime: "06:00 PM", activity: "Admin Window", details: "(Screens Allowed): Get updates, check news, apply for jobs/opportunities.", zone: "transition", startMin: 990, endMin: 1080 },
+  { startTime: "06:00 PM", endTime: "08:00 PM", activity: "Radical Solitude", details: "2 Hours: Sit entirely alone. No screens, no books, no music. Process your thoughts.", zone: "reset", startMin: 1080, endMin: 1200 },
+  { startTime: "08:00 PM", endTime: "09:00 PM", activity: "Dinner & Relax", details: "Dinner with family.", zone: "transition", startMin: 1200, endMin: 1260 },
+  { startTime: "09:00 PM", endTime: "12:00 AM", activity: "SCREENS OFF", details: "Analog activities, Nightly Journaling.", zone: "transition", startMin: 1260, endMin: 1440 },
+  { startTime: "12:00 AM", endTime: "08:00 AM", activity: "Sleep", details: "Lights out.", zone: "sleep", startMin: 0, endMin: 480 }
 ];
 
 export default function BiologicalTimeline({
@@ -348,7 +116,9 @@ export default function BiologicalTimeline({
 
   // Shift offset based on wakeTime selector (baseline wake is 08:00 AM = 480 mins)
   const getOffsetMins = (): number => {
-    const standardWakeMins = 480; // 08:00 AM
+    const standardWakeMins = 480; // 08:00 AM baseline to match the new routine arrays
+    if (!wakeTime) return 0;
+    
     const [wakeH, wakeM] = wakeTime.split(':').map(Number);
     const customWakeMins = (wakeH * 60) + wakeM;
     return customWakeMins - standardWakeMins;

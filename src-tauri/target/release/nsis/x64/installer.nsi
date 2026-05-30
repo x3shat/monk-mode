@@ -39,7 +39,7 @@ ${StrLoc}
 !define SIDEBARIMAGE ""
 !define HEADERIMAGE ""
 !define MAINBINARYNAME "monk-mode"
-!define MAINBINARYSRCPATH "C:\Users\shata\Downloads\100-days-monk-mode\src-tauri\target\release\monk-mode.exe"
+!define MAINBINARYSRCPATH "C:\Users\shata\Downloads\New folder\monk-mode\src-tauri\target\release\monk-mode.exe"
 !define BUNDLEID "com.monkmode.app"
 !define COPYRIGHT ""
 !define OUTFILE "nsis-output.exe"
@@ -442,7 +442,7 @@ FunctionEnd
 ;Languages
 !insertmacro MUI_LANGUAGE "English"
 !insertmacro MUI_RESERVEFILE_LANGDLL
-  !include "C:\Users\shata\Downloads\100-days-monk-mode\src-tauri\target\release\nsis\x64\English.nsh"
+  !include "C:\Users\shata\Downloads\New folder\monk-mode\src-tauri\target\release\nsis\x64\English.nsh"
 
 Function .onInit
   ${GetOptions} $CMDLINE "/P" $PassiveMode

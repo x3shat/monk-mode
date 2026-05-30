@@ -1,6 +1,6 @@
-C:\Users\shata\Downloads\100-days-monk-mode\src-tauri\target\release\deps\zerofrom_derive-f7dc8f28fc3cb62a.d: C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerofrom-derive-0.1.7\src\lib.rs C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerofrom-derive-0.1.7\src\visitor.rs
+C:\Users\shata\Downloads\New folder\monk-mode\src-tauri\target\release\deps\zerofrom_derive-f7dc8f28fc3cb62a.d: C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerofrom-derive-0.1.7\src\lib.rs C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerofrom-derive-0.1.7\src\visitor.rs
 
-C:\Users\shata\Downloads\100-days-monk-mode\src-tauri\target\release\deps\zerofrom_derive-f7dc8f28fc3cb62a.dll: C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerofrom-derive-0.1.7\src\lib.rs C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerofrom-derive-0.1.7\src\visitor.rs
+C:\Users\shata\Downloads\New folder\monk-mode\src-tauri\target\release\deps\zerofrom_derive-f7dc8f28fc3cb62a.dll: C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerofrom-derive-0.1.7\src\lib.rs C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerofrom-derive-0.1.7\src\visitor.rs
 
 C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerofrom-derive-0.1.7\src\lib.rs:
 C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\zerofrom-derive-0.1.7\src\visitor.rs:

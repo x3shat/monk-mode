@@ -46,7 +46,7 @@
         <Media Id="1" Cabinet="app.cab" EmbedCab="yes" />
 
 
-        <Icon Id="ProductIcon" SourceFile="C:\Users\shata\Downloads\100-days-monk-mode\src-tauri\target\release\resources\icon.ico"/>
+        <Icon Id="ProductIcon" SourceFile="C:\Users\shata\Downloads\New folder\monk-mode\src-tauri\target\release\resources\icon.ico"/>
         <Property Id="ARPPRODUCTICON" Value="ProductIcon" />
         <Property Id="ARPNOREPAIR" Value="yes" Secure="yes" />      <!-- Remove repair -->
         <SetProperty Id="ARPNOMODIFY" Value="1" After="InstallValidate" Sequence="execute"/>
@@ -107,7 +107,7 @@
                 <!-- Change the Root to HKCU for perUser installations -->
 </Component>
             <Component Id="Path" Guid="b7cc04cc-d4eb-536b-b542-c8169b148f97" Win64="$(var.Win64)">
-                <File Id="Path" Source="C:\Users\shata\Downloads\100-days-monk-mode\src-tauri\target\release\monk-mode.exe" KeyPath="yes" Checksum="yes"/>
+                <File Id="Path" Source="C:\Users\shata\Downloads\New folder\monk-mode\src-tauri\target\release\monk-mode.exe" KeyPath="yes" Checksum="yes"/>
 </Component>
             
             <Component Id="CMP_UninstallShortcut" Guid="*">

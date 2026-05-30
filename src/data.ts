@@ -69,85 +69,85 @@ export const INITIAL_WILLPOWER_RULES: WillpowerRule[] = [
 
 export const INITIAL_DEFAULT_ROUTINE: RoutineItem[] = [
   {
-    time: "06:00 AM",
+    time: "08:00 AM",
     activity: "Wake Up & Hydrate",
     details: "Drink 2 glasses of pure water. No devices, no screens, no notifications.",
     zone: "reset"
   },
   {
-    time: "06:15 AM",
+    time: "08:15 AM",
     activity: "Morning Sunlight & Prep",
     details: "Stand on the balcony, view daylight for 5-10 mins. Drink tea, prepares circadian cycle.",
     zone: "reset"
   },
   {
-    time: "06:30 AM",
+    time: "08:30 AM",
     activity: "Study Block 1 (3.5 hrs)",
     details: "Pre-game: Stare at space on the wall for 2 mins. Study in total silence.",
     zone: "deep-work"
   },
   {
-    time: "10:00 AM",
+    time: "12:00 PM",
     activity: "Breakfast & Rest",
     details: "Eat at the dining table in total silence. No screens allowed.",
     zone: "reset"
   },
   {
-    time: "11:00 AM",
+    time: "01:00 PM",
     activity: "Study Block 2 (2.5 hrs)",
     details: "Pre-game: Stare at space on the wall for 1-2 mins.",
     zone: "deep-work"
   },
   {
-    time: "01:30 PM",
+    time: "03:30 PM",
     activity: "Hygiene & Lunch",
     details: "60-Second Cold Shower finish. Lunch in total silence. Break/Walk outside.",
     zone: "reset"
   },
   {
-    time: "02:30 PM",
+    time: "04:30 PM",
     activity: "Study Block 3 (2.5 hrs)",
     details: "Final study block of the day. Consolidate tough topics.",
     zone: "deep-work"
   },
   {
-    time: "05:00 PM",
+    time: "07:00 PM",
     activity: "Yoga Nidra / Deep Rest",
     details: "Lying down, listening to deep relaxation. Deep nervous system reset.",
     zone: "reset"
   },
   {
-    time: "05:30 PM",
+    time: "07:30 PM",
     activity: "Admin Window",
     details: "Address outstanding tasks, review schedules, check applications.",
     zone: "transition"
   },
   {
-    time: "06:30 PM",
+    time: "08:30 PM",
     activity: "Physical Training",
     details: "High intensity workout, cardio or muscle training. Active sweat block.",
     zone: "transition"
   },
   {
-    time: "08:00 PM",
+    time: "10:00 PM",
     activity: "Radical Solitude (2 hrs)",
     details: "Complete solitude. No screens, no books, no music. Process your mental landscape.",
     zone: "reset"
   },
   {
-    time: "10:00 PM",
+    time: "12:00 AM",
     activity: "SCREEN OFF & Warm Down",
     details: "No digital device contact. Read paper books, write or review notes.",
     zone: "sleep"
   },
   {
-    time: "10:30 PM",
+    time: "12:30 AM",
     activity: "Nightly Journaling",
     details: "Review current goals, log 3 wins, prepare schedules for next day.",
     zone: "sleep"
   },
   {
-    time: "11:00 PM",
+    time: "01:00 AM",
     activity: "Lights Out Sleep",
     details: "Deep, pure sleep. Recharging cognitive batteries.",
     zone: "sleep"
