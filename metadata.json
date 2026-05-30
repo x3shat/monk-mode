@@ -1,0 +1,6 @@
+{
+  "name": "100 Days Monk Mode",
+  "description": "High-fidelity psychological cockpit and tracking dashboard designed for cognitive performance, with a 10x10 milestone progress grid, willpower helper systems, and biological chronobiology timers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

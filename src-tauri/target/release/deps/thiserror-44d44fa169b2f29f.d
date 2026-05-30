@@ -1,0 +1,14 @@
+C:\Users\shata\Downloads\100-days-monk-mode\src-tauri\target\release\deps\thiserror-44d44fa169b2f29f.d: C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\lib.rs C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\aserror.rs C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\display.rs C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\var.rs C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\private.rs C:\Users\shata\Downloads\100-days-monk-mode\src-tauri\target\release\build\thiserror-1da6cec3b66150db\out/private.rs
+
+C:\Users\shata\Downloads\100-days-monk-mode\src-tauri\target\release\deps\libthiserror-44d44fa169b2f29f.rlib: C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\lib.rs C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\aserror.rs C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\display.rs C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\var.rs C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\private.rs C:\Users\shata\Downloads\100-days-monk-mode\src-tauri\target\release\build\thiserror-1da6cec3b66150db\out/private.rs
+
+C:\Users\shata\Downloads\100-days-monk-mode\src-tauri\target\release\deps\libthiserror-44d44fa169b2f29f.rmeta: C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\lib.rs C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\aserror.rs C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\display.rs C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\var.rs C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\private.rs C:\Users\shata\Downloads\100-days-monk-mode\src-tauri\target\release\build\thiserror-1da6cec3b66150db\out/private.rs
+
+C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\lib.rs:
+C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\aserror.rs:
+C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\display.rs:
+C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\var.rs:
+C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\private.rs:
+C:\Users\shata\Downloads\100-days-monk-mode\src-tauri\target\release\build\thiserror-1da6cec3b66150db\out/private.rs:
+
+# env-dep:OUT_DIR=C:\\Users\\shata\\Downloads\\100-days-monk-mode\\src-tauri\\target\\release\\build\\thiserror-1da6cec3b66150db\\out

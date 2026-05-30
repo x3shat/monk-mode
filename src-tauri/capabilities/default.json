@@ -1,0 +1,9 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default permissions for the Monk Mode desktop app window",
+  "windows": ["main"],
+  "permissions": [
+    "core:default"
+  ]
+}
