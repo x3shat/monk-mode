@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   ShieldAlert, 
   Flame, 
@@ -45,9 +45,11 @@ export default function ActiveTriggers({
   const [formIntervention, setFormIntervention] = useState('');
   const [formDetails, setFormDetails] = useState('');
 
-  // 10-Min Override state
+  // 10-Min Override state and drift prevention refs
   const [overrideSecs, setOverrideSecs] = useState(600); // 10 minutes
   const [isOverrideRunning, setIsOverrideRunning] = useState(false);
+  const overrideStartRef = useRef<number | null>(null);
+  const overrideInitialRemainingRef = useRef<number>(600);
 
   // Pushup counters
   const [completedRepCount, setCompletedRepCount] = useState(0);
@@ -93,31 +95,53 @@ export default function ActiveTriggers({
 
   useEffect(() => {
     let interval: any = null;
-    if (isOverrideRunning && overrideSecs > 0) {
+    if (isOverrideRunning) {
+      overrideStartRef.current = Date.now();
+      overrideInitialRemainingRef.current = overrideSecs;
+
       interval = setInterval(() => {
-        setOverrideSecs((s) => s - 1);
-      }, 1000);
-    } else if (overrideSecs === 0) {
-      setIsOverrideRunning(false);
-      try {
-        const audio = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const osc = audio.createOscillator();
-        const gain = audio.createGain();
-        osc.connect(gain);
-        gain.connect(audio.destination);
-        osc.frequency.setValueAtTime(580, audio.currentTime);
-        gain.gain.setValueAtTime(0.3, audio.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audio.currentTime + 1.2);
-        osc.start();
-        osc.stop(audio.currentTime + 1.2);
-      } catch (e) {
-        console.warn(e);
-      }
+        if (overrideStartRef.current === null) return;
+
+        const elapsed = Math.floor((Date.now() - overrideStartRef.current) / 1000);
+        const remaining = Math.max(0, overrideInitialRemainingRef.current - elapsed);
+
+        setOverrideSecs(remaining);
+
+        if (remaining <= 0) {
+          setIsOverrideRunning(false);
+          overrideStartRef.current = null;
+          clearInterval(interval);
+          try {
+            const audio = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const osc = audio.createOscillator();
+            const gain = audio.createGain();
+            osc.connect(gain);
+            gain.connect(audio.destination);
+            osc.frequency.setValueAtTime(580, audio.currentTime);
+            gain.gain.setValueAtTime(0.3, audio.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audio.currentTime + 1.2);
+            
+            // Close AudioContext when oscillator finishes to prevent memory leak
+            osc.onended = () => {
+              try {
+                audio.close();
+              } catch (err) {}
+            };
+
+            osc.start();
+            osc.stop(audio.currentTime + 1.2);
+          } catch (e) {
+            console.warn(e);
+          }
+        }
+      }, 200);
     } else {
-      clearInterval(interval);
+      overrideStartRef.current = null;
     }
-    return () => clearInterval(interval);
-  }, [isOverrideRunning, overrideSecs]);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isOverrideRunning]);
 
   const handleStartOverride = () => {
     setIsOverrideRunning(true);

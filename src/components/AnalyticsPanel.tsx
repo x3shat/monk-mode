@@ -25,20 +25,51 @@ interface AnalyticsPanelProps {
 }
 
 export default function AnalyticsPanel({ days, theme }: AnalyticsPanelProps) {
-  // Calculate sequential metrics up to the highest non-locked day
-  let completedCumulative = 0;
-  let missedCumulative = 0;
+  // Helper to calculate momentum at a specific day index including streak bonuses
+  const getMomentumAtDay = (dayNum: number): number => {
+    const daysUpTo = days.slice(0, dayNum);
+    let completedCount = 0;
+    let partialCount = 0;
+    let missedCount = 0;
+    let maxLoggedDay = 0;
+
+    daysUpTo.forEach((d) => {
+      if (d.status === 'completed') {
+        completedCount++;
+        maxLoggedDay = d.dayNumber;
+      } else if (d.status === 'partial') {
+        partialCount++;
+        maxLoggedDay = d.dayNumber;
+      } else if (d.status === 'missed') {
+        missedCount++;
+        maxLoggedDay = d.dayNumber;
+      }
+    });
+
+    let streak = 0;
+    if (maxLoggedDay > 0) {
+      for (let i = maxLoggedDay; i >= 1; i--) {
+        const day = daysUpTo.find((d) => d.dayNumber === i);
+        if (day && (day.status === 'completed' || day.status === 'partial')) {
+          streak++;
+        } else {
+          break;
+        }
+      }
+    }
+
+    const baseMomentum = (completedCount * 5) + (partialCount * 2) - (missedCount * 3);
+    const streakBonus = streak * 1;
+    const rawVal = baseMomentum + streakBonus;
+
+    return Math.max(0, Math.min(100, rawVal));
+  };
 
   const chartData = days.map((d) => {
-    if (d.status === 'completed') completedCumulative++;
-    if (d.status === 'missed') missedCumulative++;
-    
-    const momentumScore = Math.max(0, Math.min(100, 50 + (completedCumulative * 5) - (missedCumulative * 3)));
-    
     return {
       day: `Day ${d.dayNumber}`,
       dayNum: d.dayNumber,
-      momentum: d.status === 'locked' ? null : momentumScore,
+      momentum: d.status === 'locked' ? null : getMomentumAtDay(d.dayNumber),
       studyHours: d.status === 'locked' ? null : (d.studyHours || 0),
       status: d.status
     };

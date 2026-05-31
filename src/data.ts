@@ -5,11 +5,13 @@
 
 import { DayProgress, GoalNode, RoutineItem, WillpowerRule } from './types';
 
-// Helps in formatting dates starting from Day 1: May 26, 2026
+export const MONK_MODE_START_DATE = '2026-05-26';
+
+// Helps in formatting dates starting from Day 1
 export const getDayDateString = (dayNumber: number, customStartDate?: Date | string): string => {
   const startDate = customStartDate 
     ? (customStartDate instanceof Date ? new Date(customStartDate.getTime()) : new Date(customStartDate))
-    : new Date(2026, 4, 26); // May 26, 2026
+    : new Date(MONK_MODE_START_DATE);
   startDate.setDate(startDate.getDate() + (dayNumber - 1));
   const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -220,78 +222,18 @@ export const INITIAL_GOAL_MAP: GoalNode[] = [
 // Generate standard initial 100 days
 export const generateInitialDays = (customStartDate?: Date | string): DayProgress[] => {
   const days: DayProgress[] = [];
-  
-  // Custom baseline notes for past days to make the interface feel lived-in
-  // The current date is May 30, which stands as Day 5 if Day 1 is May 26.
-  const presetNotes: Record<number, { notes: string[], status: 'completed' | 'missed', hrs: number }> = {
-    1: { 
-      status: 'completed', 
-      notes: [
-        'Woke up early at 6 AM. Did 2 min wall stare focus training.', 
-        'Studied QA & Number systems in Study Block 1 (3.5 hours).', 
-        'Silent dining felt quiet but built high mindfulness.',
-        'Completed cold shower and was super alert during Study Block 2!'
-      ], 
-      hrs: 8.5 
-    },
-    2: { 
-      status: 'completed', 
-      notes: [
-        'Felt massive cravings in morning but did 10 rapid pushups.', 
-        'Study block 2 math sets felt challenging. Pushed through using 10 min trigger rule.', 
-        'Read physical book prior to sleep. Zero screens after 10 PM.'
-      ], 
-      hrs: 9.0 
-    },
-    3: { 
-      status: 'completed', 
-      notes: [
-        'DILR sets solved: finished 4 tricky logical pathing problems.', 
-        'Yoga Nidra at 5 PM gave an incredible refreshing feeling after Study Block 3.'
-      ], 
-      hrs: 8.0 
-    },
-    4: { 
-      status: 'completed', 
-      notes: [
-        'Solid physical routine. Completed high intensity push workout in the evening.', 
-        'Did stratascratch data engineering problems: SQL aggregations got cleared up.'
-      ], 
-      hrs: 8.5 
-    },
-    5: { 
-      status: 'completed', // Today: May 30
-      notes: [
-        'Initiated 100 Days Monk Mode console dashboard!', 
-        'Currently active in Study Block 2.'
-      ], 
-      hrs: 4.5 
-    }
-  };
 
   for (let i = 1; i <= 100; i++) {
     const dateStr = getDayDateString(i, customStartDate);
-    const preset = presetNotes[i];
     
-    if (preset) {
-      days.push({
-        dayNumber: i,
-        status: preset.status,
-        date: dateStr,
-        notes: preset.notes,
-        willpowerViolations: [],
-        studyHours: preset.hrs
-      });
-    } else {
-      days.push({
-        dayNumber: i,
-        status: i === 6 ? 'unlocked' : 'locked', // The day after current completed days is unlocked
-        date: dateStr,
-        notes: [],
-        willpowerViolations: [],
-        studyHours: 0
-      });
-    }
+    days.push({
+      dayNumber: i,
+      status: i === 1 ? 'unlocked' : 'locked', // Only Day 1 starts unlocked
+      date: dateStr,
+      notes: [],
+      willpowerViolations: [],
+      studyHours: 0
+    });
   }
   
   return days;

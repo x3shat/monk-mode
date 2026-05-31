@@ -1,7 +1,7 @@
-C:\Users\shata\Downloads\100-days-monk-mode\src-tauri\target\release\deps\smallvec-e45a200af336c5f8.d: C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\smallvec-1.15.1\src\lib.rs
+C:\Users\shata\Downloads\monk-mode\src-tauri\target\release\deps\smallvec-e45a200af336c5f8.d: C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\smallvec-1.15.1\src\lib.rs
 
-C:\Users\shata\Downloads\100-days-monk-mode\src-tauri\target\release\deps\libsmallvec-e45a200af336c5f8.rlib: C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\smallvec-1.15.1\src\lib.rs
+C:\Users\shata\Downloads\monk-mode\src-tauri\target\release\deps\libsmallvec-e45a200af336c5f8.rlib: C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\smallvec-1.15.1\src\lib.rs
 
-C:\Users\shata\Downloads\100-days-monk-mode\src-tauri\target\release\deps\libsmallvec-e45a200af336c5f8.rmeta: C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\smallvec-1.15.1\src\lib.rs
+C:\Users\shata\Downloads\monk-mode\src-tauri\target\release\deps\libsmallvec-e45a200af336c5f8.rmeta: C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\smallvec-1.15.1\src\lib.rs
 
 C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\smallvec-1.15.1\src\lib.rs:

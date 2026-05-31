@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type DayStatus = 'locked' | 'unlocked' | 'completed' | 'missed';
+export type DayStatus = 'locked' | 'unlocked' | 'completed' | 'missed' | 'partial';
 
 export interface DayProgress {
   dayNumber: number;

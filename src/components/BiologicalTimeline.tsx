@@ -277,7 +277,7 @@ export default function BiologicalTimeline({
                     {isActive ? (
                       <div className="relative flex items-center justify-center">
                         <span className={`absolute animate-ping w-4.5 h-4.5 rounded-full ${isSunday ? 'bg-amber-400/25' : 'bg-cyan-400/25'}`}></span>
-                        <span className={`w-3 h-3 rounded-full border z-10 ${
+                        <span className={`w-3 h-3 rounded-full border z-10 animate-pulse ${
                           isSunday 
                             ? 'bg-amber-500 border-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.6)]' 
                             : 'bg-cyan-400 border-cyan-300 shadow-[0_0_8px_rgba(34,211,238,0.6)]'
@@ -290,7 +290,7 @@ export default function BiologicalTimeline({
 
                   {/* Content Block Card */}
                   <div 
-                    className={`flex-1 p-4 rounded-xl border text-left transition-all duration-300 ${
+                    className={`flex-1 p-4 rounded-xl border text-left transition-all duration-300 relative overflow-hidden ${
                       isActive 
                         ? (isSunday 
                             ? 'bg-amber-500/10 border-amber-500 text-amber-50 shadow-[0_0_15px_rgba(245,158,11,0.06)] scale-[1.01]'
@@ -298,6 +298,14 @@ export default function BiologicalTimeline({
                         : 'bg-[#08080c]/30 border-white/[0.03] text-slate-450 hover:border-white/[0.08] hover:bg-[#08080c]/50 routine-block-inactive hover:shadow-md hover:scale-[1.005]'
                     }`}
                   >
+                    {isActive && (
+                      <div 
+                        className={`absolute left-0 right-0 h-[2px] pointer-events-none transition-all duration-300 ${
+                          isSunday ? 'bg-amber-400 shadow-[0_0_8px_#fbbf24]' : 'bg-cyan-400 shadow-[0_0_8px_#22d3ee]'
+                        }`}
+                        style={{ top: `${elapsedPercent}%` }}
+                      />
+                    )}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/[0.03] pb-2 mb-2">
                       <div className="flex items-center gap-2">
                         <span className={`font-mono text-xs font-bold leading-none ${isActive ? (isSunday ? 'text-amber-400' : 'text-cyan-400') : 'text-slate-500'}`}>

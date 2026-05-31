@@ -17,6 +17,7 @@ import {
   Check 
 } from 'lucide-react';
 import { AppState } from '../types';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface SettingsAndDataProps {
   appState: AppState;
@@ -33,6 +34,8 @@ export default function SettingsAndData({
   const [importError, setImportError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState(false);
   const [isDevModeOpen, setIsDevModeOpen] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const snippets = [
@@ -148,6 +151,22 @@ export class GoogleDriveSyncService {
     fileInputRef.current?.click();
   };
 
+  const isValidMonkState = (data: any): boolean => {
+    if (!data || typeof data !== 'object') return false;
+    if (!Array.isArray(data.days) || data.days.length !== 100) return false;
+    
+    const validStatuses = ['locked', 'unlocked', 'completed', 'missed', 'partial'];
+    
+    for (const item of data.days) {
+      if (!item || typeof item !== 'object') return false;
+      if (typeof item.dayNumber !== 'number') return false;
+      if (!validStatuses.includes(item.status)) return false;
+      if (typeof item.studyHours !== 'number') return false;
+    }
+    
+    return true;
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -156,14 +175,27 @@ export class GoogleDriveSyncService {
     reader.onload = (event) => {
       try {
         const parsed = JSON.parse(event.target?.result as string);
-        if (parsed && Array.isArray(parsed.days)) {
-          onImportState(parsed);
-          setImportSuccess(true);
-          setImportError(null);
-          setTimeout(() => setImportSuccess(false), 4000);
-        } else {
+        if (!isValidMonkState(parsed)) {
+          alert("Invalid backup file detected. Import aborted to prevent data corruption.");
           setImportError("Invalid backup file format. Select a valid Monk Mode backup.");
+          return;
         }
+
+        // Automatically trigger backup of current state before importing new data
+        const backupBlob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
+        const backupUrl = URL.createObjectURL(backupBlob);
+        const link = document.createElement('a');
+        link.href = backupUrl;
+        link.download = `monk_mode_pre_import_backup_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(backupUrl);
+
+        onImportState(parsed);
+        setImportSuccess(true);
+        setImportError(null);
+        setTimeout(() => setImportSuccess(false), 4000);
       } catch (err) {
         setImportError("Failed to parse file. Ensure it is a valid backup JSON file.");
       }
@@ -172,20 +204,8 @@ export class GoogleDriveSyncService {
   };
 
   const handleFactoryReset = () => {
-    const confirm1 = window.confirm(
-      "⚠️ WARNING: FACTORY RESET REQUESTED ⚠️\n\n" +
-      "You are about to perform a Hard Reset. This will permanently wipe all your progress logs, study hours, custom tasks, milestones, and start date.\n\n" +
-      "This action is irreversible. Are you sure you want to proceed?"
-    );
-    if (confirm1) {
-      const confirm2 = window.confirm(
-        "🛑 FINAL WARNING: IRREVERSIBLE OPERATION 🛑\n\n" +
-        "Are you absolutely certain you want to start over from scratch? All data will be permanently deleted. Click OK to execute factory reset."
-      );
-      if (confirm2) {
-        onResetJourney();
-      }
-    }
+    setResetConfirmText('');
+    setShowResetModal(true);
   };
 
   return (
@@ -211,7 +231,7 @@ export class GoogleDriveSyncService {
         <div className="bg-[#050508] p-5 rounded-2xl border border-white/[0.04] shadow-inner space-y-4">
           <div>
             <h3 className="text-xs font-bold text-slate-100 font-mono uppercase tracking-wider text-cyan-400">
-              Backup & Restore Progress
+              Data Center & Backups
             </h3>
             <p className="text-xs text-slate-400 leading-relaxed mt-1">
               Download a backup of your logs to save your progress locally, or upload a previous backup file to restore your 100-day session data.
@@ -366,6 +386,89 @@ export class GoogleDriveSyncService {
         </div>
 
       </div>
+
+      {/* Vercel-Style Safety Confirmation Modal */}
+      <AnimatePresence>
+        {showResetModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowResetModal(false)}
+              className="absolute inset-0 bg-[#000000]/80 backdrop-blur-sm"
+            />
+            
+            {/* Modal Container */}
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              transition={{ type: 'spring', duration: 0.4 }}
+              className="relative w-full max-w-md bg-[#0a0a0f] border border-red-500/20 rounded-2xl p-6 shadow-[0_0_30px_rgba(239,68,68,0.15)] flex flex-col gap-5 z-10 text-left font-sans"
+            >
+              <div>
+                <h3 className="text-base font-bold text-red-400 flex items-center gap-2">
+                  <AlertTriangle size={16} className="text-red-400 animate-pulse" />
+                  Irreversible Factory Reset
+                </h3>
+                <p className="text-[10px] text-slate-500 font-mono mt-1 uppercase tracking-wider">
+                  Data Destruction Authorization Required
+                </p>
+              </div>
+
+              <div className="bg-red-950/15 border border-red-900/30 p-4 rounded-xl space-y-2">
+                <p className="text-xs text-red-200 font-bold leading-normal">
+                  ⚠️ Warning: All progress, logs, milestones, custom goals, and rules will be permanently erased.
+                </p>
+                <p className="text-[11px] text-slate-400 leading-normal">
+                  This action cannot be undone. Once executed, your local database is completely wiped and you will start back on Day 1.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-mono uppercase tracking-widest text-slate-400 block font-bold">
+                  Type <span className="text-red-400 font-black">RESET</span> to confirm authorization
+                </label>
+                <input 
+                  type="text"
+                  placeholder="Type RESET in all caps..."
+                  value={resetConfirmText}
+                  onChange={(e) => setResetConfirmText(e.target.value)}
+                  className="w-full bg-[#08080c] border border-white/[0.04] text-sm px-4 py-3 rounded-xl text-slate-200 outline-none focus:border-red-400/50"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowResetModal(false)}
+                  className="flex-1 py-3 bg-[#08080c] hover:bg-white/[0.02] text-slate-400 hover:text-white text-xs font-mono font-bold rounded-xl border border-white/[0.04] transition-all cursor-pointer text-center"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={resetConfirmText !== 'RESET'}
+                  onClick={() => {
+                    onResetJourney();
+                    setShowResetModal(false);
+                  }}
+                  className={`flex-1 py-3 text-xs font-mono font-bold rounded-xl transition-all text-center border ${
+                    resetConfirmText === 'RESET'
+                      ? 'bg-red-500 hover:bg-red-400 text-black border-red-400/30 cursor-pointer shadow-[0_0_15px_rgba(239,68,68,0.2)]'
+                      : 'bg-red-950/10 text-red-950/40 border-red-950/20 cursor-not-allowed'
+                  }`}
+                >
+                  Confirm Reset
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

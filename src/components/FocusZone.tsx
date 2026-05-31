@@ -8,20 +8,78 @@ import { Play, Pause, RotateCcw, Volume2, VolumeX, Eye, Flame, Compass, ChevronL
 import { motion, AnimatePresence } from 'motion/react';
 
 interface FocusZoneProps {
+  selectedDayNumber: number;
+  onLogHours: (dayNum: number, additionalHours: number) => void;
   onClose: () => void;
 }
 
-export default function FocusZone({ onClose }: FocusZoneProps) {
+
+
+export default function FocusZone({ selectedDayNumber, onLogHours, onClose }: FocusZoneProps) {
   // Pomodoro timer state
+  const [selectedDuration, setSelectedDuration] = useState<number>(90);
   const [timerMinutes, setTimerMinutes] = useState(90);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
+
+  useEffect(() => {
+    if (!isTimerRunning) {
+      setTimerMinutes(selectedDuration);
+      setTimerSeconds(0);
+    }
+  }, [selectedDuration, isTimerRunning]);
   const [focusTask, setFocusTask] = useState('');
   const [completedPomodoros, setCompletedPomodoros] = useState(0);
 
-  // Box Breathing cycle: 'Inhale' | 'Hold In' | 'Exhale' | 'Hold Out'
-  const [breathingPhase, setBreathingPhase] = useState<'Inhale' | 'Hold In' | 'Exhale' | 'Hold Out'>('Inhale');
-  const [breathingSecs, setBreathingSecs] = useState(4);
+  // Logging hours state
+  const [showLogButton, setShowLogButton] = useState(false);
+  const [sessionDurationSeconds, setSessionDurationSeconds] = useState(0);
+  const [isLogged, setIsLogged] = useState(false);
+
+  // --- BULLETPROOF BREATHING ENGINE ---
+  const [isBreathingActive, setIsBreathingActive] = useState(false);
+  const [breathingMode, setBreathingMode] = useState<'box' | '478'>('478');
+  const [breathTick, setBreathTick] = useState(0);
+
+  useEffect(() => {
+    let interval: any = null;
+    if (isBreathingActive) {
+      interval = setInterval(() => {
+        setBreathTick((prev) => prev + 1);
+      }, 1000);
+    } else {
+      setBreathTick(0);
+    }
+    return () => clearInterval(interval);
+  }, [isBreathingActive]);
+
+  // Derived Math Engine (Impossible to desync)
+  let currentPhaseText = "";
+  let breathSecsRemaining = 0;
+  let phaseScale = 1;
+  let phaseOpacity = 0.1;
+
+  if (breathingMode === 'box') {
+    const cycleTick = breathTick % 16;
+    if (cycleTick < 4) {
+      currentPhaseText = "INHALE"; breathSecsRemaining = 4 - cycleTick; phaseScale = 1.2; phaseOpacity = 0.2;
+    } else if (cycleTick < 8) {
+      currentPhaseText = "HOLD (FULL)"; breathSecsRemaining = 4 - (cycleTick - 4); phaseScale = 1.3; phaseOpacity = 0.3;
+    } else if (cycleTick < 12) {
+      currentPhaseText = "EXHALE"; breathSecsRemaining = 4 - (cycleTick - 8); phaseScale = 0.8; phaseOpacity = 0.1;
+    } else {
+      currentPhaseText = "HOLD (EMPTY)"; breathSecsRemaining = 4 - (cycleTick - 12); phaseScale = 0.8; phaseOpacity = 0.05;
+    }
+  } else {
+    const cycleTick = breathTick % 19;
+    if (cycleTick < 4) {
+      currentPhaseText = "INHALE"; breathSecsRemaining = 4 - cycleTick; phaseScale = 1.2; phaseOpacity = 0.2;
+    } else if (cycleTick < 11) {
+      currentPhaseText = "HOLD (FULL)"; breathSecsRemaining = 7 - (cycleTick - 4); phaseScale = 1.4; phaseOpacity = 0.3;
+    } else {
+      currentPhaseText = "EXHALE"; breathSecsRemaining = 8 - (cycleTick - 11); phaseScale = 0.8; phaseOpacity = 0.1;
+    }
+  }
 
   // 2-Minute Wall Stare state (Rule #4 Focus Trigger)
   const [stareActive, setStareActive] = useState(false);
@@ -32,28 +90,50 @@ export default function FocusZone({ onClose }: FocusZoneProps) {
   const [synthVolume, setSynthVolume] = useState(0.4);
   const [synthType, setSynthType] = useState<'theta' | 'brown' | 'space'>('theta');
 
-  // Refs for audio context
+  // Refs for audio context and timer synchronization (prevents drift)
   const audioCtxRef = useRef<AudioContext | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
   const activeOscillatorsRef = useRef<any[]>([]);
   const activeNodesRef = useRef<AudioNode[]>([]);
 
+
+  const pomodoroStartRef = useRef<number | null>(null);
+  const pomodoroInitialRemainingRef = useRef<number>(90 * 60);
+
+  const stareStartRef = useRef<number | null>(null);
+  const stareInitialRemainingRef = useRef<number>(120);
+
   // Pomodoro clock timer logic
   useEffect(() => {
     let interval: any = null;
     if (isTimerRunning) {
+      pomodoroStartRef.current = Date.now();
+      const initialSecs = timerMinutes * 60 + timerSeconds;
+      pomodoroInitialRemainingRef.current = initialSecs;
+      setSessionDurationSeconds(initialSecs);
+      setIsLogged(false);
+      setShowLogButton(false);
+
       interval = setInterval(() => {
-        if (timerSeconds > 0) {
-          setTimerSeconds(timerSeconds - 1);
-        } else if (timerMinutes > 0) {
-          setTimerMinutes(timerMinutes - 1);
-          setTimerSeconds(59);
-        } else {
-          // Timer finished
+        if (pomodoroStartRef.current === null) return;
+        
+        const elapsed = Math.floor((Date.now() - pomodoroStartRef.current) / 1000);
+        const remaining = Math.max(0, pomodoroInitialRemainingRef.current - elapsed);
+        
+        const mins = Math.floor(remaining / 60);
+        const secs = remaining % 60;
+        
+        setTimerMinutes(mins);
+        setTimerSeconds(secs);
+        
+        if (remaining <= 0) {
           setIsTimerRunning(false);
           setCompletedPomodoros((prev) => prev + 1);
-          setTimerMinutes(90);
+          setTimerMinutes(selectedDuration);
           setTimerSeconds(0);
+          pomodoroStartRef.current = null;
+          setShowLogButton(true);
+          clearInterval(interval);
           try {
             // Gentle high-pitch beep
             const beepCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -64,29 +144,56 @@ export default function FocusZone({ onClose }: FocusZoneProps) {
             osc.frequency.setValueAtTime(600, beepCtx.currentTime);
             gain.gain.setValueAtTime(0.3, beepCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, beepCtx.currentTime + 1);
+            
+            // Close AudioContext when oscillator finishes to prevent memory leak
+            osc.onended = () => {
+              try {
+                beepCtx.close();
+              } catch (err) {}
+            };
+            
             osc.start();
             osc.stop(beepCtx.currentTime + 1);
           } catch (e) {
             console.warn(e);
           }
         }
-      }, 1000);
+      }, 200);
     } else {
-      clearInterval(interval);
+      pomodoroStartRef.current = null;
     }
-    return () => clearInterval(interval);
-  }, [isTimerRunning, timerMinutes, timerSeconds]);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isTimerRunning]);
+
+  const handleLogHours = () => {
+    if (isLogged || sessionDurationSeconds <= 0) return;
+    const hours = sessionDurationSeconds / 3600;
+    onLogHours(selectedDayNumber, hours);
+    setIsLogged(true);
+  };
 
   // Wall stare timer logic
   useEffect(() => {
     let interval: any = null;
     if (stareActive) {
+      stareStartRef.current = Date.now();
+      stareInitialRemainingRef.current = stareSecs;
+
       interval = setInterval(() => {
-        if (stareSecs > 0) {
-          setStareSecs((s) => s - 1);
-        } else {
+        if (stareStartRef.current === null) return;
+
+        const elapsed = Math.floor((Date.now() - stareStartRef.current) / 1000);
+        const remaining = Math.max(0, stareInitialRemainingRef.current - elapsed);
+
+        setStareSecs(remaining);
+
+        if (remaining <= 0) {
           setStareActive(false);
           setStareSecs(120);
+          stareStartRef.current = null;
+          clearInterval(interval);
           try {
             const beepCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
             const osc = beepCtx.createOscillator();
@@ -96,40 +203,30 @@ export default function FocusZone({ onClose }: FocusZoneProps) {
             osc.frequency.setValueAtTime(440, beepCtx.currentTime);
             gain.gain.setValueAtTime(0.2, beepCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, beepCtx.currentTime + 0.8);
+            
+            // Close AudioContext when oscillator finishes to prevent memory leak
+            osc.onended = () => {
+              try {
+                beepCtx.close();
+              } catch (err) {}
+            };
+
             osc.start();
             osc.stop(beepCtx.currentTime + 0.8);
           } catch (e) {
             console.warn(e);
           }
         }
-      }, 1000);
+      }, 200);
     } else {
-      clearInterval(interval);
+      stareStartRef.current = null;
     }
-    return () => clearInterval(interval);
-  }, [stareActive, stareSecs]);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [stareActive]);
 
-  // Box Breathing cycle countdown
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setBreathingSecs((prev) => {
-        if (prev <= 1) {
-          // Switch phase
-          setBreathingPhase((currentPhase) => {
-            switch (currentPhase) {
-              case 'Inhale': return 'Hold In';
-              case 'Hold In': return 'Exhale';
-              case 'Exhale': return 'Hold Out';
-              case 'Hold Out': return 'Inhale';
-            }
-          });
-          return 4; // 4 second box
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+
 
   // Web Audio Synth management for ambient noise
   const startSynth = () => {
@@ -362,63 +459,10 @@ export default function FocusZone({ onClose }: FocusZoneProps) {
       {/* Main Centered Focus Workspace Wrapper */}
       <div className="flex-1 w-full flex items-center justify-center min-h-[calc(100vh-160px)]">
         {/* Main Container Grid */}
-        <div className="max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 py-8 items-center">
+        <div className="max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 py-8 items-center">
         
-        {/* Left Side: Breathing Guidance */}
-        <div className="lg:col-span-5 flex flex-col items-center justify-center text-center p-6 bg-[#0a0a0f]/60 border border-white/[0.04] rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.5)] relative overflow-hidden">
-          <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500 mb-6 font-semibold">
-            Chronos Box Breathing Engine
-          </span>
-          
-          {/* Animated Glowing Breathing Circle */}
-          <div className="relative w-64 h-64 flex items-center justify-center">
-            {/* Pulsing Backlit rings with cyan glow */}
-            <motion.div 
-              animate={{ 
-                scale: 
-                  breathingPhase === 'Inhale' ? 1.4 :
-                  breathingPhase === 'Hold In' ? 1.4 :
-                  breathingPhase === 'Exhale' ? 0.9 : 0.9,
-                opacity: breathingPhase === 'Inhale' || breathingPhase === 'Hold In' ? 0.25 : 0.1
-              }}
-              transition={{ duration: 4, ease: "easeInOut" }}
-              className="absolute -inset-4 bg-cyan-400/15 rounded-full blur-2xl pointer-events-none" 
-            />
-
-            <motion.div 
-              animate={{ 
-                scale: 
-                  breathingPhase === 'Inhale' ? [0.95, 1.35] :
-                  breathingPhase === 'Hold In' ? 1.35 :
-                  breathingPhase === 'Exhale' ? [1.35, 0.95] : 0.95,
-              }}
-              transition={{ duration: 4, ease: "easeInOut" }}
-              className="w-48 h-48 rounded-full border-2 border-white/[0.04] flex flex-col items-center justify-center bg-[#08080c] relative z-10 shadow-inner"
-            >
-              <span className="text-cyan-400 text-[10px] font-mono tracking-widest uppercase font-bold">
-                {breathingPhase}
-              </span>
-              <span className="text-3xl font-light font-sans text-slate-150 mt-2 font-data">
-                {breathingSecs}s
-              </span>
-            </motion.div>
-          </div>
-
-          <div className="mt-8 max-w-xs z-10">
-            <h4 id="breathing-guide-phase-label" className="text-sm font-semibold text-slate-300">
-              {breathingPhase === 'Inhale' && "Expand lung capacity smoothly"}
-              {breathingPhase === 'Hold In' && "Let blood oxygen levels stabilize"}
-              {breathingPhase === 'Exhale' && "Release mental fatigue slowly"}
-              {breathingPhase === 'Hold Out' && "Enjoy absolute silence of vacancy"}
-            </h4>
-            <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-              Box Breathing is utilized by Navy SEALs to instantly suppress physical anxiety and restore cognitive sanity.
-            </p>
-          </div>
-        </div>
-
-        {/* Center Side: Pomodoro / Focused Task Workspace */}
-        <div className="lg:col-span-4 flex flex-col justify-center gap-6 p-6 md:p-8 bg-[#0a0a0f] border border-white/[0.04] rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+        {/* Left Side: Pomodoro / Focused Task Workspace */}
+        <div className="lg:col-span-1 flex flex-col justify-center gap-6 p-6 md:p-8 bg-[#0a0a0f] border border-white/[0.04] rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-mono uppercase tracking-widest text-cyan-400 font-bold">
               Active Focus Target
@@ -434,58 +478,76 @@ export default function FocusZone({ onClose }: FocusZoneProps) {
           </div>
 
           <div className="text-center py-6">
+            <div className="text-[10px] font-mono text-slate-505 uppercase tracking-wider mb-2 select-none font-bold">
+              Working on Day {selectedDayNumber}
+            </div>
             <span className="text-5xl md:text-6xl font-light font-mono text-white tracking-tight hover:text-cyan-400 transition-colors font-data">
               {String(timerMinutes).padStart(2, '0')}:{String(timerSeconds).padStart(2, '0')}
             </span>
             
             {/* Quick Timer adjustments */}
-            <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
-              <button 
-                onClick={() => changeTimerDuration(25)}
-                className="text-[10px] px-2.5 py-1.5 rounded-lg bg-[#08080c] border border-white/[0.04] text-slate-450 hover:text-white hover:bg-white/5 transition-all"
-              >
-                25m
-              </button>
-              <button 
-                onClick={() => changeTimerDuration(45)}
-                className="text-[10px] px-2.5 py-1.5 rounded-lg bg-[#08080c] border border-white/[0.04] text-slate-450 hover:text-white hover:bg-white/5 transition-all"
-              >
-                45m
-              </button>
-              <button 
-                onClick={() => changeTimerDuration(90)}
-                className="text-[10px] px-2.5 py-1.5 rounded-lg bg-[#08080c] border border-white/[0.04] text-cyan-400 hover:text-white hover:bg-white/5 transition-all font-bold"
-              >
-                90m (Default)
-              </button>
-              <button 
-                onClick={() => changeTimerDuration(120)}
-                className="text-[10px] px-2.5 py-1.5 rounded-lg bg-[#08080c] border border-white/[0.04] text-slate-450 hover:text-white hover:bg-white/5 transition-all"
-              >
-                2h
-              </button>
-              <button 
-                onClick={() => changeTimerDuration(180)}
-                className="text-[10px] px-2.5 py-1.5 rounded-lg bg-[#08080c] border border-white/[0.04] text-slate-450 hover:text-white hover:bg-white/5 transition-all"
-              >
-                3h
-              </button>
-              <div className="flex items-center gap-1 bg-[#08080c] border border-white/[0.04] rounded-lg px-2 py-0.5">
-                <input 
-                  type="number"
-                  min="1"
-                  max="720"
-                  placeholder="Custom Min"
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value);
-                    if (val > 0) changeTimerDuration(val);
-                  }}
-                  className="w-14 bg-transparent text-[10px] text-slate-200 placeholder:text-slate-650 outline-none"
-                />
-                <span className="text-[8px] font-mono text-slate-500 uppercase">Min</span>
+            {!isTimerRunning && (
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
+                <button 
+                  onClick={() => changeTimerDuration(25)}
+                  className={`text-[10px] px-2.5 py-1.5 rounded-lg bg-[#08080c] border transition-all cursor-pointer ${
+                    selectedDuration === 25 
+                      ? 'text-cyan-400 border-cyan-400/35 bg-[#0a0a0f]' 
+                      : 'border-white/[0.04] text-slate-450 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  25m
+                </button>
+                <button 
+                  onClick={() => changeTimerDuration(50)}
+                  className={`text-[10px] px-2.5 py-1.5 rounded-lg bg-[#08080c] border transition-all cursor-pointer ${
+                    selectedDuration === 50 
+                      ? 'text-cyan-400 border-cyan-400/35 bg-[#0a0a0f]' 
+                      : 'border-white/[0.04] text-slate-450 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  50m
+                </button>
+                <button 
+                  onClick={() => changeTimerDuration(90)}
+                  className={`text-[10px] px-2.5 py-1.5 rounded-lg bg-[#08080c] border transition-all cursor-pointer font-bold ${
+                    selectedDuration === 90 
+                      ? 'text-cyan-400 border-cyan-400/35 bg-[#0a0a0f]' 
+                      : 'border-white/[0.04] text-slate-450 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  90m
+                </button>
+                <button 
+                  onClick={() => changeTimerDuration(120)}
+                  className={`text-[10px] px-2.5 py-1.5 rounded-lg bg-[#08080c] border transition-all cursor-pointer ${
+                    selectedDuration === 120 
+                      ? 'text-cyan-400 border-cyan-400/35 bg-[#0a0a0f]' 
+                      : 'border-white/[0.04] text-slate-450 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  120m
+                </button>
               </div>
-            </div>
+            )}
           </div>
+
+          {showLogButton && (
+            <button
+              id="log-session-hours-btn"
+              onClick={handleLogHours}
+              className={`w-full py-3.5 text-xs font-mono font-bold rounded-xl transition-all cursor-pointer border ${
+                isLogged
+                  ? 'bg-green-500 border-green-400 text-black shadow-[0_0_15px_rgba(34,197,94,0.3)] hover:bg-green-400'
+                  : 'bg-[#08080c] hover:bg-white/5 text-cyan-400 hover:text-cyan-300 border-cyan-400/40 hover:border-cyan-400/60 shadow-[0_0_12px_rgba(34,211,238,0.1)]'
+              }`}
+            >
+              {isLogged 
+                ? `Logged to Day ${selectedDayNumber} (+${(sessionDurationSeconds / 3600).toFixed(2)}h)` 
+                : `Log Session to Day ${selectedDayNumber} (+${(sessionDurationSeconds / 3600).toFixed(2)}h)`
+              }
+            </button>
+          )}
 
           <div className="flex items-center gap-3">
             <button 
@@ -505,7 +567,7 @@ export default function FocusZone({ onClose }: FocusZoneProps) {
               id="focus-timer-reset-btn"
               onClick={() => {
                 setIsTimerRunning(false);
-                setTimerMinutes(90);
+                setTimerMinutes(selectedDuration);
                 setTimerSeconds(0);
               }}
               className="p-3 bg-[#08080c] hover:bg-white/5 text-slate-400 hover:text-white border border-white/[0.04] rounded-xl transition-all cursor-pointer"
@@ -517,7 +579,7 @@ export default function FocusZone({ onClose }: FocusZoneProps) {
         </div>
 
         {/* Right Side: Soundboard Synth & Rule 4 Mini-Stare Game */}
-        <div className="lg:col-span-3 flex flex-col gap-6">
+        <div className="lg:col-span-1 flex flex-col gap-6">
           
           {/* Audio Synthesizer Controls */}
           <div className="p-5 bg-[#0a0a0f] border border-white/[0.04] rounded-2xl flex flex-col gap-4 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
@@ -579,6 +641,70 @@ export default function FocusZone({ onClose }: FocusZoneProps) {
                 className="w-24 accent-cyan-400 bg-[#08080c] rounded-lg appearance-none h-1 cursor-pointer"
               />
             </div>
+          </div>
+
+          {/* Tactical Breathing Protocol Widget */}
+          <div className="p-5 bg-white dark:bg-[#0a0a0f] border border-slate-200 dark:border-white/[0.04] rounded-2xl flex flex-col gap-4 shadow-sm dark:shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono tracking-wider text-green-700 dark:text-green-400 font-bold flex items-center gap-1.5 uppercase">
+                <span className={`w-2 h-2 rounded-full ${isBreathingActive ? 'bg-green-500 animate-pulse' : 'bg-slate-300 dark:bg-slate-600'}`}></span>
+                NEURAL RESET PROTOCOL
+              </span>
+              
+              {!isBreathingActive && (
+                <div className="flex bg-slate-100 dark:bg-[#08080c] border border-slate-200 dark:border-white/[0.04] rounded-lg p-0.5">
+                  <button
+                    onClick={() => setBreathingMode('box')}
+                    className={`px-2 py-1 text-[9px] font-mono rounded transition-all ${breathingMode === 'box' ? 'bg-white dark:bg-[#0a0a0f] text-green-700 dark:text-green-400 font-bold shadow-sm border border-slate-200 dark:border-transparent' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                  >
+                    BOX
+                  </button>
+                  <button
+                    onClick={() => setBreathingMode('478')}
+                    className={`px-2 py-1 text-[9px] font-mono rounded transition-all ${breathingMode === '478' ? 'bg-white dark:bg-[#0a0a0f] text-green-700 dark:text-green-400 font-bold shadow-sm border border-slate-200 dark:border-transparent' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                  >
+                    4-7-8
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col items-center justify-center py-6 bg-slate-50 dark:bg-[#050508] rounded-xl border border-slate-200 dark:border-white/[0.04] relative overflow-hidden min-h-[140px]">
+              {isBreathingActive ? (
+                <>
+                  {/* Animated Visualizer Circle */}
+                  <div 
+                    className="absolute inset-0 bg-green-400/20 dark:bg-green-400/10 rounded-full blur-2xl transition-all duration-1000 ease-in-out"
+                    style={{
+                      transform: `scale(${phaseScale})`,
+                      opacity: phaseOpacity
+                    }}
+                  ></div>
+                  
+                  <span className="text-[10px] text-green-700 dark:text-green-400 font-mono font-bold tracking-widest uppercase z-10">
+                    {currentPhaseText}
+                  </span>
+                  <span className="text-5xl font-mono text-slate-800 dark:text-white font-light mt-1 z-10 font-data">
+                    {breathSecsRemaining}s
+                  </span>
+                </>
+              ) : (
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-mono text-center px-4">
+                  {breathingMode === '478' ? "4-7-8: Inhale 4s, Hold 7s, Exhale 8s." : "BOX: Inhale 4s, Hold 4s, Exhale 4s, Hold 4s."} <br/> Ready to engage.
+                </span>
+              )}
+            </div>
+
+            <button
+              onClick={() => setIsBreathingActive(!isBreathingActive)}
+              className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                isBreathingActive 
+                ? 'bg-slate-200 dark:bg-[#08080c] border-slate-300 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-white/5' 
+                : 'bg-[#15803d] text-white hover:bg-[#166534] border-[#15803d] shadow-md dark:bg-green-600 dark:hover:bg-green-500'
+              }`}
+            >
+              {isBreathingActive ? 'Stop Protocol' : 'Initiate Neural Reset'}
+            </button>
           </div>
 
           {/* Stare at a Single Spot Tool (Rule #4 Trigger) */}

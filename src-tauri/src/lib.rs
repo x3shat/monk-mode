@@ -1,6 +1,6 @@
-use std::sync::Mutex;
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
+use std::sync::Mutex;
 use tauri::Manager;
 
 struct DbState(Mutex<Connection>);
@@ -95,11 +95,8 @@ fn init_db(conn: &Connection) -> Result<(), rusqlite::Error> {
     )?;
 
     // Check if table is empty
-    let count: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM willpower_rules",
-        [],
-        |row| row.get(0),
-    )?;
+    let count: i64 =
+        conn.query_row("SELECT COUNT(*) FROM willpower_rules", [], |row| row.get(0))?;
 
     if count == 0 {
         let initial_rules = vec![
@@ -155,14 +152,16 @@ fn init_db(conn: &Connection) -> Result<(), rusqlite::Error> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let app_data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&app_data_dir)?;
             let db_path = app_data_dir.join("monk_mode.db");
             let conn = Connection::open(db_path)?;
-            
+
             init_db(&conn)?;
-            
+
             app.manage(DbState(Mutex::new(conn)));
             Ok(())
         })

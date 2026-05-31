@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Flame, 
   Calendar, 
@@ -30,9 +30,10 @@ import {
   INITIAL_WILLPOWER_RULES, 
   INITIAL_DEFAULT_ROUTINE, 
   INITIAL_GOAL_MAP,
-  getDayDateString
+  getDayDateString,
+  MONK_MODE_START_DATE
 } from './data';
-import { AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 
 import FocusZone from './components/FocusZone';
 import Grid100Days from './components/Grid100Days';
@@ -43,6 +44,16 @@ import SettingsAndData from './components/SettingsAndData';
 import AnalyticsPanel from './components/AnalyticsPanel';
 import DailyNotes from './components/DailyNotes';
 import { fetchWillpowerRules, addWillpowerRule, updateWillpowerRule, deleteWillpowerRule } from './tauriService';
+
+const navItems = [
+  { id: 'grid', label: '10x10 Strategic Grid', icon: <Calendar size={13} /> },
+  { id: 'biological', label: 'Routine Timelines', icon: <Clock size={13} /> },
+  { id: 'willpower', label: 'Active Willpower Rules', icon: <ShieldAlert size={13} /> },
+  { id: 'goals', label: 'Objective Tree Map', icon: <Target size={13} /> },
+  { id: 'analytics', label: 'Analytics & Trends', icon: <TrendingUp size={13} /> },
+  { id: 'notes', label: 'Notes & Journal', icon: <FileText size={13} /> },
+  { id: 'settings', label: 'Settings & Data', icon: <Settings size={13} /> }
+] as const;
 
 export default function App() {
   // State initialization with localStorage fallback
@@ -59,7 +70,7 @@ export default function App() {
       console.warn("Storage access not available in sandbox, falling back directly.");
     }
     const savedDate = typeof window !== 'undefined' ? localStorage.getItem('monk_mode_start_date') : null;
-    return generateInitialDays(savedDate || '2026-05-26');
+    return generateInitialDays(savedDate || MONK_MODE_START_DATE);
   });
 
   const [wakeTime, setWakeTime] = useState<string>(() => {
@@ -90,17 +101,46 @@ export default function App() {
     return INITIAL_GOAL_MAP;
   });
 
-  const [selectedDayNumber, setSelectedDayNumber] = useState<number>(5); // Default focus on day 5 (preset/interactive day)
-  const [startDate, setStartDate] = useState<string | null>(() => {
+  // Get initial start date helper to calculate start date and selected day number
+  const getInitialStartDate = (): string | null => {
     try {
       const savedDate = localStorage.getItem('monk_mode_start_date');
       if (savedDate) return savedDate;
       const savedDays = localStorage.getItem('monk_mode_days');
-      if (savedDays) return '2026-05-26';
+      if (savedDays) return MONK_MODE_START_DATE;
     } catch (e) {}
     return null;
+  };
+
+  const [startDate, setStartDate] = useState<string | null>(getInitialStartDate);
+
+  const [selectedDayNumber, setSelectedDayNumber] = useState<number>(() => {
+    const today = new Date();
+    const startStr = getInitialStartDate() || MONK_MODE_START_DATE;
+    const start = new Date(startStr);
+    const diffTime = today.getTime() - start.getTime();
+    if (diffTime < 0) return 1;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return Math.min(100, Math.max(1, diffDays));
   });
   const [rules, setRules] = useState<WillpowerRule[]>([]);
+
+  const [showSavedIndicator, setShowSavedIndicator] = useState(false);
+  const isInitialMount = useRef(true);
+
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    setShowSavedIndicator(true);
+    const timer = setTimeout(() => {
+      setShowSavedIndicator(false);
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, [days, goals, wakeTime, sleepTime]);
 
   // Fetch willpower rules on startup
   useEffect(() => {
@@ -209,6 +249,16 @@ export default function App() {
     );
   };
 
+  const handleAddStudyHours = (dayNum: number, additionalHours: number) => {
+    setDays((prevDays) =>
+      prevDays.map((day) =>
+        day.dayNumber === dayNum
+          ? { ...day, studyHours: Number((day.studyHours + additionalHours).toFixed(2)) }
+          : day
+      )
+    );
+  };
+
   const handleToggleGoalStatus = (goalId: string) => {
     setGoals((prevGoals) =>
       prevGoals.map((g) =>
@@ -246,7 +296,7 @@ export default function App() {
   };
 
   const handleResetGrid = () => {
-    setDays(generateInitialDays(startDate || '2026-05-26'));
+    setDays(generateInitialDays(startDate || MONK_MODE_START_DATE));
     setGoals(INITIAL_GOAL_MAP);
     setWakeTime('06:00');
     setSleepTime('23:00');
@@ -272,20 +322,53 @@ export default function App() {
       localStorage.removeItem('monk_mode_start_date');
       localStorage.removeItem('monk_mode_days');
     } catch (e) {}
-    setDays(generateInitialDays('2026-05-26'));
+    setDays(generateInitialDays(MONK_MODE_START_DATE));
     setGoals(INITIAL_GOAL_MAP);
     setWakeTime('06:00');
     setSleepTime('23:00');
   };
 
-  // Dynamically calculate clinical Momentum score (Base 50%)
-  // Completed days add +5% each, missed days decay by -3% each. Cap 0 to 100.
+  // Overhaul clinical Streak calculation
+  const calculateCurrentStreak = (): number => {
+    let maxLoggedDay = 0;
+    days.forEach((d) => {
+      if (d.status === 'completed' || d.status === 'partial' || d.status === 'missed') {
+        if (d.dayNumber > maxLoggedDay) maxLoggedDay = d.dayNumber;
+      }
+    });
+
+    let streak = 0;
+    if (maxLoggedDay > 0) {
+      for (let i = maxLoggedDay; i >= 1; i--) {
+        const day = days.find((d) => d.dayNumber === i);
+        if (day && (day.status === 'completed' || day.status === 'partial')) {
+          streak++;
+        } else {
+          break;
+        }
+      }
+    }
+    return streak;
+  };
+
+  const currentStreak = calculateCurrentStreak();
+
+  // Overhaul clinical Momentum score: base 0, +5% completed, +2% partial, -3% missed, plus consecutive active streak bonus (+1% each)
   const calculateMomentumValue = (): number => {
-    const completedCount = days.filter((d) => d.status === 'completed').length;
-    const missedCount = days.filter((d) => d.status === 'missed').length;
-    
-    // Core adaptive formula
-    const rawVal = 50 + (completedCount * 5) - (missedCount * 3);
+    let completedCount = 0;
+    let partialCount = 0;
+    let missedCount = 0;
+
+    days.forEach((d) => {
+      if (d.status === 'completed') completedCount++;
+      else if (d.status === 'partial') partialCount++;
+      else if (d.status === 'missed') missedCount++;
+    });
+
+    const baseMomentum = (completedCount * 5) + (partialCount * 2) - (missedCount * 3);
+    const streakBonus = currentStreak * 1;
+    const rawVal = baseMomentum + streakBonus;
+
     return Math.max(0, Math.min(100, rawVal));
   };
 
@@ -304,57 +387,107 @@ export default function App() {
   const completedCount = days.filter((d) => d.status === 'completed').length;
   const missedCount = days.filter((d) => d.status === 'missed').length;
   const totalStudyHrs = days.reduce((acc, d) => acc + (d.studyHours || 0), 0);
+  const activeStudyDays = days.filter(d => d.studyHours && d.studyHours > 0).length || 1;
 
   // Biological Timeline status overview
   const daysInSurge = completedCount <= 14;
   const daysInFlatline = completedCount > 14 && completedCount <= 45;
 
   return (
-    <div className={`min-h-screen ${theme === 'light' ? 'bg-[#f5f5f7] text-[#1c1c1e]' : 'bg-[#000000] text-zinc-100'} p-4 md:p-8 font-sans transition-colors duration-200 selection:bg-cyan-950/30 selection:text-cyan-50`}>
+    <div className={`min-h-screen ${theme === 'light' ? 'bg-[#f5f5f7] text-[#1c1c1e]' : 'bg-[#000000] text-zinc-100'} font-sans transition-colors duration-200 selection:bg-cyan-950/30 selection:text-cyan-50 flex flex-col md:flex-row`}>
       
       {/* Immersive Full Screen Focus Overlay (Calm Mode) */}
       <AnimatePresence>
         {isCalmModeActive && (
-          <FocusZone onClose={() => setIsCalmModeActive(false)} />
+          <FocusZone 
+            selectedDayNumber={selectedDayNumber}
+            onLogHours={handleAddStudyHours}
+            onClose={() => setIsCalmModeActive(false)} 
+          />
         )}
       </AnimatePresence>
 
-      {/* Main Container Workspace */}
-      <div className="max-w-7xl mx-auto space-y-6">
-
-        {/* Global Dashboard Navigation Header */}
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border-b border-[#111118] pb-5">
-          <div className="space-y-1">
-            <h1 className="text-xl md:text-2xl font-bold font-sans tracking-tight text-white flex items-center gap-2">
-              <Zap size={22} className="text-cyan-400 animate-accent-pulse" />
-              100 DAYS MONK MODE
+      {/* FIXED SIDEBAR NAV (COCKPIT LAYOUT) */}
+      <aside className={`w-full md:w-64 border-b md:border-b-0 md:border-r p-5 flex flex-col justify-between shrink-0 md:sticky md:top-0 md:h-screen z-20 transition-colors duration-200 ${
+        theme === 'light' 
+          ? 'bg-slate-50 border-slate-200 text-[#1c1c1e]' 
+          : 'bg-[#0a0a0f] border-white/[0.04] text-zinc-100'
+      }`}>
+        <div className="space-y-6">
+          <div className={`space-y-1 pb-4 border-b ${theme === 'light' ? 'border-slate-200' : 'border-white/[0.04]'}`}>
+            <h1 className={`text-lg font-bold font-sans tracking-tight flex items-center gap-2 select-none ${
+              theme === 'light' ? 'text-slate-900' : 'text-white'
+            }`}>
+              <Zap size={20} className="text-cyan-400 animate-accent-pulse" />
+              100 DAYS MONK
             </h1>
-            <p className="text-[11px] md:text-xs text-zinc-500 font-mono tracking-wider uppercase">
-              Psychological Habit Control Deck & Cognitive Flight Controller
+            <p className={`text-[10px] font-mono tracking-wider uppercase leading-relaxed select-none ${
+              theme === 'light' ? 'text-slate-550' : 'text-zinc-500'
+            }`}>
+              Habit Deck & Flight Controller
             </p>
           </div>
-
-          <div className="flex items-center gap-3">
-            {/* Global Theme Toggle */}
-            <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2.5 bg-[#0a0a0f] hover:bg-[#0c0c0f] text-slate-400 hover:text-white rounded-xl border border-white/[0.04] cursor-pointer transition-all flex items-center justify-center"
-              title={theme === 'dark' ? 'Activate Premium Light Mode' : 'Activate Obsidian Dark Mode'}
-            >
-              {theme === 'dark' ? <Sun size={15} className="text-amber-400 animate-spin-slow" /> : <Moon size={15} className="text-indigo-400" />}
-            </button>
-
-            <button
-              id="activate-calm-zone-btn"
-              onClick={() => setIsCalmModeActive(true)}
-              className="px-4 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-black hover:text-black text-xs font-mono font-bold rounded-xl flex items-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(34,211,238,0.2)] transition-all border border-cyan-400/40"
-            >
-              <EyeOff size={14} />
-              ACTIVATE CALM MODE FOCUS ZONE
-            </button>
-          </div>
+          
+          <nav className="flex flex-col gap-1">
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                id={`tab-btn-${item.id}`}
+                onClick={() => setActiveTab(item.id)}
+                className={`w-full px-3 py-2.5 rounded-xl transition-all cursor-pointer flex items-center gap-2.5 text-left text-xs font-mono font-bold ${
+                  activeTab === item.id
+                    ? (theme === 'light'
+                        ? 'bg-green-105 text-green-800 border border-green-200 shadow-sm'
+                        : 'bg-cyan-950/20 text-cyan-400 border border-cyan-500/20 shadow-[0_0_10px_rgba(34,211,238,0.05)]')
+                    : (theme === 'light'
+                        ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 border border-transparent'
+                        : 'text-zinc-550 hover:text-zinc-350 border border-transparent')
+                }`}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </nav>
         </div>
 
+        <div className={`pt-4 border-t ${theme === 'light' ? 'border-slate-200' : 'border-white/[0.04]'} flex flex-col gap-2.5`}>
+          <button
+            id="activate-calm-zone-btn"
+            onClick={() => setIsCalmModeActive(true)}
+            className="w-full py-2.5 bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-mono font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(34,211,238,0.15)] transition-all border border-cyan-400/30"
+          >
+            <EyeOff size={13} />
+            CALM FOCUS ZONE
+          </button>
+          
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className={`w-full py-2.5 rounded-xl cursor-pointer transition-all flex items-center justify-center gap-2 text-xs font-mono font-bold border ${
+              theme === 'light'
+                ? 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200 shadow-sm'
+                : 'bg-[#08080c] hover:bg-white/[0.02] text-slate-405 hover:text-white border-white/[0.04]'
+            }`}
+            title={theme === 'dark' ? 'Activate Premium Light Mode' : 'Activate Obsidian Dark Mode'}
+          >
+            {theme === 'dark' ? (
+              <>
+                <Sun size={13} className="text-amber-400 animate-spin-slow" />
+                LIGHT DECK
+              </>
+            ) : (
+              <>
+                <Moon size={13} className="text-indigo-400" />
+                OBSIDIAN DECK
+              </>
+            )}
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Workspace content */}
+      <main className="flex-1 p-4 md:p-8 overflow-y-auto w-full max-w-7xl mx-auto space-y-6">
+        
         {/* Dynamic Metric HUD Strip */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           
@@ -384,27 +517,44 @@ export default function App() {
             </div>
           </div>
 
-          {/* 2nd Meter: Task Completed Progress */}
-          <div className="bg-[#0c0c0f]/60 border border-[#111118] p-4 rounded-xl flex flex-col justify-between shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono tracking-wider text-zinc-500 uppercase font-bold">CHRONO PROGRESSION</span>
-              <Calendar size={14} className="text-zinc-500" />
-            </div>
-            <div className="pt-3">
-              <span id="completed-days-badge-count" className="text-3xl font-data font-bold text-white tracking-tight">
-                {completedCount}/100 <span className="text-xs font-normal text-zinc-500">Days</span>
-              </span>
-              <div className="mt-2.5 h-1.5 w-full bg-[#050508] rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-amber-500 rounded-full transition-all duration-500"
-                  style={{ width: `${completedCount}%` }}
-                ></div>
+          {/* 2nd Meter: Current Streak */}
+          <div className="bg-[#0c0c0f]/60 border border-[#111118] p-4 rounded-xl flex items-center justify-between shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+            <div className="flex flex-col justify-between h-full col-span-1">
+              <span className="text-[10px] font-mono tracking-wider text-zinc-500 uppercase font-bold">CURRENT STREAK</span>
+              <div className="pt-2.5">
+                <span id="streak-badge-count" className="text-3xl font-data font-bold text-white tracking-tight">
+                  {currentStreak} <span className="text-xs font-mono font-normal text-zinc-500">Days</span>
+                </span>
+                <p className="text-[9px] font-mono text-amber-500 leading-normal mt-1.5 uppercase">
+                  Active non-missed run
+                </p>
               </div>
             </div>
-            <div className="pt-2 text-[9px] font-mono text-zinc-500 leading-normal mt-1">
-              {daysInSurge && <span className="text-amber-500">Tier 1: THE SURGE (0-14 Days) Active</span>}
-              {daysInFlatline && <span className="text-sky-400">Tier 2: THE FLATLINE (15-45 Days) Active</span>}
-              {!daysInSurge && !daysInFlatline && <span className="text-cyan-400">Tier 3: ELITE BASELINE (46-100 Days)</span>}
+            
+            {/* Circular progress SVG */}
+            <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
+              <svg className="w-full h-full transform -rotate-90">
+                <circle
+                  cx="28"
+                  cy="28"
+                  r="22"
+                  className="stroke-[#050508]"
+                  strokeWidth="3.5"
+                  fill="transparent"
+                />
+                <circle
+                  cx="28"
+                  cy="28"
+                  r="22"
+                  className="stroke-cyan-400 transition-all duration-500"
+                  strokeWidth="3.5"
+                  fill="transparent"
+                  strokeDasharray={2 * Math.PI * 22}
+                  strokeDashoffset={2 * Math.PI * 22 - (Math.min(100, currentStreak) / 100) * (2 * Math.PI * 22)}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span className="absolute text-[10px] font-mono font-bold text-cyan-400">{currentStreak}d</span>
             </div>
           </div>
 
@@ -420,7 +570,7 @@ export default function App() {
               </span>
             </div>
             <div className="pt-1 text-[9px] font-mono text-zinc-500 leading-normal">
-              Average: {(completedCount ? totalStudyHrs / completedCount : 0).toFixed(1)} hours of deep work per study day.
+              Average: {(totalStudyHrs / activeStudyDays).toFixed(1)} hours of deep work per study day.
             </div>
           </div>
 
@@ -443,114 +593,6 @@ export default function App() {
             </div>
           </div>
 
-        </div>
-
-        {/* Section Navigation Tabs */}
-        <div className="flex flex-wrap items-center gap-1.5 border-b border-[#111118] pb-1 text-sm">
-          <button
-            id="tab-btn-grid"
-            onClick={() => setActiveTab('grid')}
-            className={`px-4 py-2.5 font-sans font-medium tracking-wide rounded-t-xl transition-all cursor-pointer ${
-              activeTab === 'grid' 
-                ? 'text-white border-b-2 border-cyan-400 bg-[#0c0c0f]/70 font-semibold' 
-                : 'text-zinc-500 hover:text-zinc-300'
-            }`}
-          >
-            <span className="flex items-center gap-2 text-xs">
-              <Calendar size={13} />
-              10x10 Strategic Grid
-            </span>
-          </button>
-
-          <button
-            id="tab-btn-biological"
-            onClick={() => setActiveTab('biological')}
-            className={`px-4 py-2.5 font-sans font-medium tracking-wide rounded-t-xl transition-all cursor-pointer ${
-              activeTab === 'biological' 
-                ? 'text-white border-b-2 border-cyan-400 bg-[#0c0c0f]/70 font-semibold' 
-                : 'text-zinc-500 hover:text-zinc-300'
-            }`}
-          >
-            <span className="flex items-center gap-2 text-xs">
-              <Clock size={13} />
-              Routine Timelines
-            </span>
-          </button>
-
-          <button
-            id="tab-btn-willpower"
-            onClick={() => setActiveTab('willpower')}
-            className={`px-4 py-2.5 font-sans font-medium tracking-wide rounded-t-xl transition-all cursor-pointer ${
-              activeTab === 'willpower' 
-                ? 'text-white border-b-2 border-cyan-400 bg-[#0c0c0f]/70 font-semibold' 
-                : 'text-zinc-500 hover:text-zinc-300'
-            }`}
-          >
-            <span className="flex items-center gap-2 text-xs">
-              <ShieldAlert size={13} />
-              Active Willpower Rules
-            </span>
-          </button>
-
-          <button
-            id="tab-btn-goals"
-            onClick={() => setActiveTab('goals')}
-            className={`px-4 py-2.5 font-sans font-medium tracking-wide rounded-t-xl transition-all cursor-pointer ${
-              activeTab === 'goals' 
-                ? 'text-white border-b-2 border-cyan-400 bg-[#0c0c0f]/70 font-semibold' 
-                : 'text-zinc-500 hover:text-zinc-300'
-            }`}
-          >
-            <span className="flex items-center gap-2 text-xs">
-              <Target size={13} />
-              Objective Tree Map
-            </span>
-          </button>
-
-          <button
-            id="tab-btn-analytics"
-            onClick={() => setActiveTab('analytics')}
-            className={`px-4 py-2.5 font-sans font-medium tracking-wide rounded-t-xl transition-all cursor-pointer ${
-              activeTab === 'analytics' 
-                ? 'text-white border-b-2 border-cyan-400 bg-[#0c0c0f]/70 font-semibold' 
-                : 'text-zinc-500 hover:text-zinc-300'
-            }`}
-          >
-            <span className="flex items-center gap-2 text-xs">
-              <TrendingUp size={13} />
-              Analytics & Trends
-            </span>
-          </button>
-
-          <button
-            id="tab-btn-notes"
-            onClick={() => setActiveTab('notes')}
-            className={`px-4 py-2.5 font-sans font-medium tracking-wide rounded-t-xl transition-all cursor-pointer ${
-              activeTab === 'notes' 
-                ? 'text-white border-b-2 border-cyan-400 bg-[#0c0c0f]/70 font-semibold' 
-                : 'text-zinc-500 hover:text-zinc-300'
-            }`}
-          >
-            <span className="flex items-center gap-2 text-xs">
-              <FileText size={13} />
-              Notes & Journal
-            </span>
-          </button>
-
-          <button
-            id="tab-btn-settings"
-            onClick={() => setActiveTab('settings')}
-            className={`px-4 py-2.5 font-sans font-medium tracking-wide rounded-t-xl transition-all cursor-pointer ${
-              activeTab === 'settings' 
-                ? 'text-white border-b-2 border-cyan-400 bg-[#0c0c0f]/70 font-semibold' 
-                : 'text-zinc-500 hover:text-zinc-300'
-            }`}
-          >
-            <span className="flex items-center gap-2 text-xs">
-              <Settings size={13} />
-              Settings & Data
-            </span>
-          </button>
         </div>
 
         {/* Dynamic Display of Tabs */}
@@ -603,7 +645,12 @@ export default function App() {
           )}
 
           {activeTab === 'notes' && (
-            <DailyNotes theme={theme} />
+            <DailyNotes 
+              selectedDayNumber={selectedDayNumber}
+              days={days}
+              onUpdateDayNotes={handleUpdateDayNotes}
+              theme={theme} 
+            />
           )}
 
           {activeTab === 'settings' && (
@@ -615,7 +662,24 @@ export default function App() {
           )}
         </div>
 
-      </div>
+      </main>
+
+      {/* Sleek, Tactical Fixed HUD Notification Pill */}
+      <AnimatePresence>
+        {showSavedIndicator && (
+          <motion.div
+            id="hud-saved-indicator"
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 15, scale: 0.95 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="fixed bottom-6 right-6 z-50 bg-[#0a0a0f]/90 text-cyan-400 border border-cyan-500/30 px-4 py-2.5 rounded-full flex items-center gap-2 shadow-[0_0_20px_rgba(34,211,238,0.15)] font-mono text-[11px] font-bold tracking-wider select-none uppercase"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+            <span>💾 System State Preserved</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

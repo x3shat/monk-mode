@@ -4,8 +4,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, Trash2, Award, Sparkles, BookOpen, Clock, RefreshCw, Grid } from 'lucide-react';
+import { Calendar, Plus, Trash2, Award, Sparkles, BookOpen, Clock, RefreshCw, Grid, Flag } from 'lucide-react';
 import { DayProgress, DayStatus } from '../types';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface Grid100DaysProps {
   days: DayProgress[];
@@ -34,7 +35,28 @@ export default function Grid100Days({
 }: Grid100DaysProps) {
   const [newNote, setNewNote] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'calendar'>('grid');
+  const [gridDisplayMode, setGridDisplayMode] = useState<'milestone' | 'heatmap'>('milestone');
   const [activeMonth, setActiveMonth] = useState<{ month: number, year: number } | null>(null);
+
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewStatus, setReviewStatus] = useState<DayStatus>('completed');
+  const [reviewHours, setReviewHours] = useState<number>(0);
+  const [reviewReflection, setReviewReflection] = useState<string>('');
+  const [reviewWillpower, setReviewWillpower] = useState<boolean>(true);
+
+  const handleSignOff = () => {
+    onUpdateDayStatus(selectedDay.dayNumber, reviewStatus);
+    onUpdateDayHours(selectedDay.dayNumber, reviewHours);
+    
+    const newNotes = [...selectedDay.notes];
+    if (reviewReflection.trim()) {
+      newNotes.push(`Reflection: ${reviewReflection.trim()}`);
+    }
+    newNotes.push(reviewWillpower ? "Willpower Rules: Maintained" : "Willpower Rules: Violated");
+    onUpdateDayNotes(selectedDay.dayNumber, newNotes);
+    
+    setShowReviewModal(false);
+  };
 
   const getTodayDayNumber = (): number | null => {
     if (!startDate) return null;
@@ -72,7 +94,20 @@ export default function Grid100Days({
   };
 
   const handleStatusChange = (status: DayStatus) => {
-    onUpdateDayStatus(selectedDay.dayNumber, status);
+    if (status === 'missed') {
+      if (!window.confirm("Are you sure? This will permanently mark this day as missed. There is no undo.")) {
+        return;
+      }
+      onUpdateDayStatus(selectedDay.dayNumber, status);
+    } else if (status === 'completed' || status === 'partial') {
+      setReviewStatus(status);
+      setReviewHours(selectedDay.studyHours || 0);
+      setReviewReflection('');
+      setReviewWillpower(true);
+      setShowReviewModal(true);
+    } else {
+      onUpdateDayStatus(selectedDay.dayNumber, status);
+    }
   };
 
   const handleHoursChange = (val: string) => {
@@ -81,12 +116,40 @@ export default function Grid100Days({
   };
 
   const getSymmetricalColorPattern = (day: DayProgress) => {
+    if (gridDisplayMode === 'heatmap') {
+      const hours = day.studyHours || 0;
+      if (hours === 0) {
+        return 'bg-white/5 text-slate-650 border border-white/[0.04] hover:bg-white/10';
+      }
+      if (hours >= 1 && hours <= 3) {
+        return 'bg-cyan-950/20 text-cyan-400 border border-cyan-800/30 shadow-[0_0_6px_rgba(34,211,238,0.15)]';
+      }
+      if (hours >= 4 && hours <= 6) {
+        return 'bg-cyan-500/30 text-cyan-300 border border-cyan-500/50 shadow-[0_0_12px_rgba(34,211,238,0.3)]';
+      }
+      return 'bg-cyan-400 text-black border-2 border-cyan-300 shadow-[0_0_18px_rgba(34,211,238,0.6)] font-bold';
+    }
+
     if (day.status === 'completed') {
-      // Completed colors based on milestone checkpoints
-      if (day.dayNumber === 25 || day.dayNumber === 50 || day.dayNumber === 75 || day.dayNumber === 100) {
-        return 'bg-amber-500 text-black border border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.5)] animate-pulse';
+      if (day.dayNumber === 10) {
+        return 'bg-amber-500/20 text-amber-400 border border-amber-450/40 shadow-[0_0_10px_rgba(245,158,11,0.25)]';
+      }
+      if (day.dayNumber === 25) {
+        return 'bg-amber-500/40 text-amber-300 border border-amber-400 shadow-[0_0_14px_rgba(245,158,11,0.4)]';
+      }
+      if (day.dayNumber === 50) {
+        return 'bg-amber-500 text-black border border-amber-300 shadow-[0_0_18px_rgba(245,158,11,0.6)] animate-pulse';
+      }
+      if (day.dayNumber === 75) {
+        return 'bg-amber-500 text-black border-2 border-amber-300 shadow-[0_0_24px_rgba(245,158,11,0.75)] animate-pulse font-bold';
+      }
+      if (day.dayNumber === 100) {
+        return 'bg-gradient-to-r from-amber-500 to-yellow-400 text-black border-2 border-cyan-400 shadow-[0_0_30px_rgba(34,211,238,0.75)] animate-bounce font-black';
       }
       return 'bg-green-400 hover:bg-green-355 text-black border border-green-400 shadow-[0_0_10px_rgba(34,197,94,0.45)]';
+    }
+    if (day.status === 'partial') {
+      return 'bg-amber-500/20 text-amber-400 border border-amber-500/40 shadow-[0_0_8px_rgba(245,158,11,0.25)]';
     }
     if (day.status === 'missed') {
       return 'bg-red-950/80 text-red-300 border border-red-900/40';
@@ -95,7 +158,7 @@ export default function Grid100Days({
       return 'bg-[#08080c] text-slate-100 border border-green-500/20 animate-pulse hover:bg-[#0a0a0f]';
     }
     // Standard locked state
-    if (day.dayNumber === 25 || day.dayNumber === 50 || day.dayNumber === 75 || day.dayNumber === 100) {
+    if (day.dayNumber === 10 || day.dayNumber === 25 || day.dayNumber === 50 || day.dayNumber === 75 || day.dayNumber === 100) {
       return 'bg-[#050508]/50 text-amber-500/80 border border-amber-950 hover:bg-white/5';
     }
     return 'bg-white/5 text-slate-650 border border-white/[0.04] hover:bg-white/10';
@@ -261,6 +324,32 @@ export default function Grid100Days({
               </button>
             </div>
 
+            {/* Display Mode Toggle */}
+            <div className="flex bg-[#08080c] border border-white/[0.04] rounded-lg p-0.5">
+              <button
+                id="toggle-milestone-grid-btn"
+                onClick={() => setGridDisplayMode('milestone')}
+                className={`px-2.5 py-1 text-[10px] font-mono rounded cursor-pointer transition-all ${
+                  gridDisplayMode === 'milestone'
+                    ? 'bg-[#0a0a0f] text-cyan-400 font-bold border border-white/[0.04]'
+                    : 'text-slate-450 hover:text-slate-200'
+                }`}
+              >
+                Milestone Grid
+              </button>
+              <button
+                id="toggle-heatmap-intensity-btn"
+                onClick={() => setGridDisplayMode('heatmap')}
+                className={`px-2.5 py-1 text-[10px] font-mono rounded cursor-pointer transition-all ${
+                  gridDisplayMode === 'heatmap'
+                    ? 'bg-[#0a0a0f] text-cyan-400 font-bold border border-white/[0.04]'
+                    : 'text-slate-450 hover:text-slate-200'
+                }`}
+              >
+                Heatmap Intensity
+              </button>
+            </div>
+
             <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-400 bg-[#08080c] border border-white/[0.04] px-3 py-1.5 rounded-lg">
               <Award size={12} className="text-amber-500" />
               <span>Milestones: D25, D50, D75, D100</span>
@@ -287,24 +376,41 @@ export default function Grid100Days({
           >
             {days.map((day) => {
               const isSelected = day.dayNumber === selectedDayNumber;
-              const isMilestone = day.dayNumber === 25 || day.dayNumber === 50 || day.dayNumber === 75 || day.dayNumber === 100;
+              const isMilestone = day.dayNumber === 10 || day.dayNumber === 25 || day.dayNumber === 50 || day.dayNumber === 75 || day.dayNumber === 100;
               return (
                 <button
                   key={day.dayNumber}
                   id={`grid-day-cell-${day.dayNumber}`}
+                  title={`Day ${day.dayNumber}: ${day.studyHours || 0} study hours logged`}
                   onClick={() => onSelectDay(day.dayNumber)}
                   className={`aspect-square rounded-full flex flex-col items-center justify-center text-xs font-semibold font-mono relative transition-all duration-150 cursor-pointer ${
                     day.dayNumber === todayDayNumber
                       ? 'ring-2 ring-green-500 ring-offset-2 ring-offset-white dark:ring-offset-black animate-pulse z-10'
                       : (isSelected ? 'ring-2 ring-green-400 shadow-[0_0_12px_rgba(74,222,128,0.55)] z-10' : '')
-                  } ${isSelected ? 'scale-105' : ''} ${getSymmetricalColorPattern(day)} ${day.status === 'completed' ? 'monk-cell-completed' : day.status === 'missed' ? 'monk-cell-missed' : 'monk-cell-uncompleted'}`}
+                  } ${isSelected ? 'scale-105' : ''} ${getSymmetricalColorPattern(day)} ${
+                    gridDisplayMode === 'heatmap'
+                      ? ''
+                      : (day.status === 'completed'
+                          ? 'monk-cell-completed'
+                          : day.status === 'partial'
+                          ? 'monk-cell-partial'
+                          : day.status === 'missed'
+                          ? 'monk-cell-missed'
+                          : 'monk-cell-uncompleted')
+                  }`}
                 >
                   <span>{day.dayNumber}</span>
                   {isMilestone && day.status !== 'completed' && (
                     <span className="absolute bottom-1.5 w-1 h-1 bg-amber-400/80 rounded-full"></span>
                   )}
                   {isMilestone && day.status === 'completed' && (
-                    <Award size={8} className="absolute bottom-1.5 text-black" />
+                    <div className="absolute bottom-1 leading-none flex items-center justify-center">
+                      {(day.dayNumber === 10 || day.dayNumber === 25) ? (
+                        <Flag size={day.dayNumber === 10 ? 6 : 7} className="text-amber-400 font-bold" />
+                      ) : (
+                        <Award size={day.dayNumber === 50 ? 8 : day.dayNumber === 75 ? 10 : 12} className="text-black font-bold" />
+                      )}
+                    </div>
                   )}
                 </button>
               );
@@ -365,11 +471,12 @@ export default function Grid100Days({
 
                 // Monk Mode Date
                 const isSelected = day.dayNumber === selectedDayNumber;
-                const isMilestone = day.dayNumber === 25 || day.dayNumber === 50 || day.dayNumber === 75 || day.dayNumber === 100;
+                const isMilestone = day.dayNumber === 10 || day.dayNumber === 25 || day.dayNumber === 50 || day.dayNumber === 75 || day.dayNumber === 100;
                 
                 return (
                   <button
                     key={`monkday-${idx}`}
+                    title={`Day ${day.dayNumber}: ${day.studyHours || 0} study hours logged`}
                     onClick={() => onSelectDay(day.dayNumber)}
                     className={`w-full aspect-square rounded-xl p-1.5 flex flex-col justify-between relative transition-all duration-150 cursor-pointer ${
                       day.dayNumber === todayDayNumber
@@ -378,7 +485,17 @@ export default function Grid100Days({
                             ? 'ring-2 ring-green-400 bg-[#0e0e16]/80 border-green-500/30 shadow-[0_0_12px_rgba(74,222,128,0.35)] z-10' 
                             : 'bg-[#050508]/60 border border-white/[0.04] hover:border-white/[0.1] hover:bg-[#08080c]'
                           )
-                    } ${isSelected ? 'scale-105' : ''} ${day.status === 'completed' ? 'monk-cell-completed' : day.status === 'missed' ? 'monk-cell-missed' : 'monk-cell-uncompleted'}`}
+                    } ${isSelected ? 'scale-105' : ''} ${
+                      gridDisplayMode === 'heatmap'
+                        ? ''
+                        : (day.status === 'completed'
+                            ? 'monk-cell-completed'
+                            : day.status === 'partial'
+                            ? 'monk-cell-partial'
+                            : day.status === 'missed'
+                            ? 'monk-cell-missed'
+                            : 'monk-cell-uncompleted')
+                    }`}
                   >
                     {/* Top Row: Monk Day Number */}
                     <div className="flex justify-between items-center w-full">
@@ -392,12 +509,20 @@ export default function Grid100Days({
 
                     {/* Centered Circle Date Number */}
                     <div className="flex-1 flex items-center justify-center my-1.5">
-                      {day.status === 'completed' ? (
-                        <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold transition-all shadow-[0_0_10px_rgba(74,222,128,0.45)] ${
-                          day.dayNumber === 25 || day.dayNumber === 50 || day.dayNumber === 75 || day.dayNumber === 100
-                            ? 'bg-amber-500 text-black border border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.5)] animate-pulse'
-                            : 'bg-green-400 text-black border border-green-300'
+                      {gridDisplayMode === 'heatmap' ? (
+                        <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold transition-all ${
+                          getSymmetricalColorPattern(day)
                         }`}>
+                          {cell.dateNum}
+                        </div>
+                      ) : day.status === 'completed' ? (
+                        <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold transition-all ${
+                          getSymmetricalColorPattern(day)
+                        }`}>
+                          {cell.dateNum}
+                        </div>
+                      ) : day.status === 'partial' ? (
+                        <div className="w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold bg-amber-950/40 text-amber-400 border border-amber-800/40 shadow-[0_0_8px_rgba(245,158,11,0.3)]">
                           {cell.dateNum}
                         </div>
                       ) : day.status === 'missed' ? (
@@ -449,6 +574,10 @@ export default function Grid100Days({
             <span>DAY COMPLETED</span>
           </div>
           <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500/20 border border-amber-500/40 shadow-[0_0_8px_rgba(245,158,11,0.25)]"></span>
+            <span>PARTIAL DAY</span>
+          </div>
+          <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-red-950 border border-red-900/40"></span>
             <span>MISSED DAY</span>
           </div>
@@ -483,11 +612,11 @@ export default function Grid100Days({
           <label className="text-[10px] font-mono uppercase tracking-widest text-slate-500 block">
             MARK PERFORMANCE ZONE
           </label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-1.5">
             <button 
               id="set-day-completed-btn"
               onClick={() => handleStatusChange('completed')}
-              className={`py-2 text-[11px] rounded-xl font-mono transition-all border font-medium cursor-pointer ${
+              className={`py-2 text-[10px] rounded-xl font-mono transition-all border font-medium cursor-pointer ${
                 selectedDay.status === 'completed'
                 ? 'bg-green-950/30 border-green-800 text-green-400 font-bold shadow-[0_0_8px_rgba(74,222,128,0.2)]'
                 : 'bg-[#08080c] border-white/[0.04] text-slate-400 hover:text-white hover:bg-white/5'
@@ -496,9 +625,20 @@ export default function Grid100Days({
               Completed
             </button>
             <button 
+              id="set-day-partial-btn"
+              onClick={() => handleStatusChange('partial')}
+              className={`py-2 text-[10px] rounded-xl font-mono transition-all border font-medium cursor-pointer ${
+                selectedDay.status === 'partial'
+                ? 'bg-amber-950/40 border-amber-800 text-amber-400 font-bold shadow-[0_0_8px_rgba(245,158,11,0.2)]'
+                : 'bg-[#08080c] border-white/[0.04] text-slate-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              Partial
+            </button>
+            <button 
               id="set-day-missed-btn"
               onClick={() => handleStatusChange('missed')}
-              className={`py-2 text-[11px] rounded-xl font-mono transition-all border font-medium cursor-pointer ${
+              className={`py-2 text-[10px] rounded-xl font-mono transition-all border font-medium cursor-pointer ${
                 selectedDay.status === 'missed'
                 ? 'bg-red-950/60 border-red-800 text-red-300 font-bold'
                 : 'bg-[#08080c] border-white/[0.04] text-slate-400 hover:text-white hover:bg-white/5'
@@ -509,13 +649,13 @@ export default function Grid100Days({
             <button 
               id="set-day-unlocked-btn"
               onClick={() => handleStatusChange('unlocked')}
-              className={`py-2 text-[11px] rounded-xl font-mono transition-all border font-medium cursor-pointer ${
+              className={`py-2 text-[10px] rounded-xl font-mono transition-all border font-medium cursor-pointer ${
                 selectedDay.status === 'unlocked' || selectedDay.status === 'locked'
                 ? 'bg-[#08080c] border-white/[0.08] text-slate-300 font-bold'
                 : 'bg-[#08080c] border-white/[0.04] text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
-              Preview/Reset
+              Reset
             </button>
           </div>
         </div>
@@ -609,6 +749,107 @@ export default function Grid100Days({
         </div>
 
       </div>
+
+      {/* End-of-Day Protocol Modal */}
+      <AnimatePresence>
+        {showReviewModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowReviewModal(false)}
+              className="absolute inset-0 bg-[#000000]/80 backdrop-blur-sm"
+            />
+            
+            {/* Modal Container */}
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              transition={{ type: 'spring', duration: 0.4 }}
+              className="relative w-full max-w-md bg-[#0a0a0f] border border-cyan-500/20 rounded-2xl p-6 shadow-[0_0_30px_rgba(34,211,238,0.15)] flex flex-col gap-5 z-10 text-left font-sans"
+            >
+              <div>
+                <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                  <Sparkles size={16} className="text-cyan-400" />
+                  Initiate End-of-Day Review
+                </h3>
+                <p className="text-[10px] text-slate-500 font-mono mt-1 uppercase tracking-wider">
+                  Signing Off Day {selectedDay.dayNumber}
+                </p>
+              </div>
+
+              {/* Form fields */}
+              <div className="space-y-4">
+                {/* Number Input for Final Total Study Hours */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-mono uppercase tracking-widest text-slate-400 block font-bold">
+                    Final Total Study Hours Today
+                  </label>
+                  <input 
+                    type="number"
+                    min="0"
+                    max="24"
+                    step="0.5"
+                    value={reviewHours}
+                    onChange={(e) => setReviewHours(parseFloat(e.target.value) || 0)}
+                    className="w-full bg-[#08080c] border border-white/[0.04] text-sm px-4 py-3 rounded-xl text-slate-200 outline-none focus:border-cyan-400/50"
+                  />
+                </div>
+
+                {/* Text Area for One Sentence Reflection */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-mono uppercase tracking-widest text-slate-400 block font-bold">
+                    One Sentence Reflection
+                  </label>
+                  <textarea 
+                    rows={2}
+                    maxLength={150}
+                    placeholder="Capture today's primary psychological or strategic learning..."
+                    value={reviewReflection}
+                    onChange={(e) => setReviewReflection(e.target.value)}
+                    className="w-full bg-[#08080c] border border-white/[0.04] text-xs px-4 py-3 rounded-xl text-slate-200 outline-none placeholder:text-slate-650 focus:border-cyan-400/50 resize-none"
+                  />
+                </div>
+
+                {/* Checkbox for Willpower Rules */}
+                <label className="flex items-center gap-2.5 bg-[#08080c]/50 p-3 rounded-xl border border-white/[0.03] cursor-pointer hover:border-white/[0.08] transition-all">
+                  <input 
+                    type="checkbox"
+                    checked={reviewWillpower}
+                    onChange={(e) => setReviewWillpower(e.target.checked)}
+                    className="rounded bg-[#0a0a0f] border-white/[0.08] text-cyan-400 checked:bg-cyan-400"
+                  />
+                  <div className="space-y-0.5">
+                    <span className="text-xs text-slate-200 font-bold block">Maintain Willpower Rules</span>
+                    <span className="text-[9px] text-slate-500 font-mono uppercase block">Did you avoid all trigger offenses today?</span>
+                  </div>
+                </label>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowReviewModal(false)}
+                  className="flex-1 py-3 bg-[#08080c] hover:bg-white/[0.02] text-slate-400 hover:text-white text-xs font-mono font-bold rounded-xl border border-white/[0.04] transition-all cursor-pointer text-center"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSignOff}
+                  className="flex-1 py-3 bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-mono font-bold rounded-xl shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all cursor-pointer text-center border border-cyan-400/30"
+                >
+                  Sign Off & Lock Day
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

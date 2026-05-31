@@ -1,7 +1,7 @@
-C:\Users\shata\Downloads\100-days-monk-mode\src-tauri\target\release\deps\pkg_config-b20f921673db67f5.d: C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\pkg-config-0.3.33\src\lib.rs
+C:\Users\shata\Downloads\monk-mode\src-tauri\target\release\deps\pkg_config-b20f921673db67f5.d: C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\pkg-config-0.3.33\src\lib.rs
 
-C:\Users\shata\Downloads\100-days-monk-mode\src-tauri\target\release\deps\libpkg_config-b20f921673db67f5.rlib: C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\pkg-config-0.3.33\src\lib.rs
+C:\Users\shata\Downloads\monk-mode\src-tauri\target\release\deps\libpkg_config-b20f921673db67f5.rlib: C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\pkg-config-0.3.33\src\lib.rs
 
-C:\Users\shata\Downloads\100-days-monk-mode\src-tauri\target\release\deps\libpkg_config-b20f921673db67f5.rmeta: C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\pkg-config-0.3.33\src\lib.rs
+C:\Users\shata\Downloads\monk-mode\src-tauri\target\release\deps\libpkg_config-b20f921673db67f5.rmeta: C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\pkg-config-0.3.33\src\lib.rs
 
 C:\Users\shata\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\pkg-config-0.3.33\src\lib.rs:
